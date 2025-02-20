@@ -1,0 +1,106 @@
+{{template "base" .}}
+
+{{define "title"}}New Expense{{end}}
+
+{{define "main"}}
+    {{if .AddShow}}
+        {{with .AddShow}}
+        <div class='flex_div'>
+            <form class='add_form' action='/add' method='POST'>
+                <div class='input'>
+                    <label class='add_label'>Date:</label>
+                    <input class='add_input' type='text' name='date' value='{{.Date}}'>
+                </div>
+                <div class='input' >
+                    <label class='add_label'>Expense name:</label>
+                    <input class='add_input' type='text' name='name' list="expense_name">
+                        <datalist id="expense_name">
+                            {{range $.AddShow.ExpenseName}}
+                                <option value="{{.Name}}">
+                            {{end}}
+                        </datalist>
+                </div>
+                <div class='input'>
+                    <label class='add_label'>Subcat:</label>
+                    <input class='add_input' type='text' name='subcat' list="subcat">
+                        <datalist id="subcat">
+                            {{range .Subcat}}
+                                <option value="{{.Name}}">
+                            {{end}}
+                        </datalist>
+                </div>
+                <div class='input'>
+                    <label class='add_label'>City:</label>
+                    <input class='add_input' type='text' name='city' list="city_names" value='челябинск'>
+                    <datalist id="city_names">
+                        {{range .Cities}}
+                            <option value="{{.City}}">
+                        {{end}}
+                    </datalist>
+                </div>
+                <div class='input'>
+                    <label class='add_label'>Online:</label>
+                    <input class='add_input' type='text' name='online' list="online_choice" value='false'>
+                        <datalist id="online_choice">
+                            {{range .Online}}
+                                <option value="{{.}}">
+                            {{end}}
+                        </datalist>
+                </div>
+                <div class='input'>
+                    <label class='add_label'>Expense count:</label>
+                    <input class='add_input' type='text' name='count'>
+                </div>
+                <div class='input'>
+                    <label class='add_label'>Expense price:</label>
+                    <input class='add_input' type='text' name='price'>
+                </div>
+                <div class='input'>
+                    <label class='add_label'>Nds:</label>
+                    <input class='add_input' type='text' name='nds' list="nds">
+                        <datalist id="nds">
+                            {{range .Nds}}
+                                <option value="{{.}}">
+                            {{end}}
+                        </datalist>
+                </div>
+                <div class='input'>
+                    <input type='submit' name='action' value='Add Expense'>
+                </div>
+            </form>
+            <div>
+                <table>
+                    <tr>
+                        <th>Subcat</th>
+                        <th>Subcat ID</th>
+                    </tr>
+                    {{range $.AddShow.Subcat}}
+                    <tr>
+                        <td>{{.Name}}</td>
+                        <td>{{.ID}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+            </div>
+            <form class='add_form' action="/upload" method="post" enctype="multipart/form-data">
+                <div class='input'>
+                    <label class='add_label'>City:</label>
+                    <input class='add_input' type='text' name='city' list="city_names" value='челябинск'>
+                    <datalist id="city_names">
+                        {{range .Cities}}
+                            <option value="{{.City}}">
+                        {{end}}
+                    </datalist>
+                </div>
+                <div class='input'>
+                    <label for='subcat' class='add_label'>Subcat:</label>
+                    <input class='add_input' type='text' name='subcat'>
+                </div>
+                <label for='file'>Select a file:</label>
+                <input type='file' id='file' name='file'>
+                <button type="submit">Submit</button>
+              </form>
+        </div>
+        {{end}}
+    {{end}}
+{{end}}

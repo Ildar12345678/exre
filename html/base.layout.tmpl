@@ -1,0 +1,27 @@
+{{define "base"}}
+<!doctype html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <title>{{template "title" .}}</title>
+        <link rel='shortcut icon' href='/static/img/favicon.ico' type='image/x-icon'>
+        <link rel='stylesheet' type='text/css' href='/static/css/main.css'>
+        <script src="/static/js/htmx.min.js"></script>
+    </head>
+    <body>
+        <header>
+            <h1>{{template "title" .}}</h1>
+        </header>
+        <nav>
+            <a href="/expense">Expenses</a>
+            <a href="/stat">Statistics</a>
+            <a href="/add">Add expense</a>
+            <a href="/search">Search</a>
+        </nav>
+        <br>
+        <main>
+            {{template "main" .}}
+        </main>
+    </body>
+</html>
+{{end}}

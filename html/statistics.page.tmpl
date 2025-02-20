@@ -1,0 +1,57 @@
+{{template "base" .}}
+
+{{define "title"}}Stats{{end}}
+
+{{define "main"}}
+    {{template "datesInput" .}}
+
+    {{if .Statistics}}
+        {{with .Statistics}}
+            <div class="data">
+                <div class="table">
+                    <h2>Total - {{.Sum}}</h2>
+
+                    <table>
+                        <tr>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th>Sum</th>
+                        </tr>
+                        {{range .Statistics}}
+                        <tr>
+                            <td>{{.Cat}}</td>
+                            <td>{{.Subcat}}</td>
+                            <td>{{.SumSubcat}}</td>
+                        </tr>
+                        {{end}}
+                    </table>
+                </div>
+            </div>
+            <div class='graph'>
+                {{if .PngSubcat}}
+                    <svg class='graph'>
+                        {{range $i, $path := .PngSubcat}}
+                            <path class='path' d="{{index $path 0}}" fill="{{index $path 1}}" transform="scale(2)"></path>
+                        {{end}}
+                    </svg>
+                {{else}}
+                    <p>No graph</p>
+                {{end}}
+                {{if .PngCat}}
+                    <svg class='graph'>
+                        {{range $i, $path := .PngCat}}
+                            <path class='path' d="{{index $path 0}}" fill="{{index $path 1}}" transform="scale(2)"></path>
+                        {{end}}
+                    </svg>
+                {{else}}
+                    <p>No graph</p>
+                {{end}}
+            </div>
+        {{end}}
+        <div class='hide'>
+            <p>lalalala</p>
+        </div>
+    {{else}}
+        <p>There's nothing to see here... yet!</p>
+    {{end}}
+{{end}}

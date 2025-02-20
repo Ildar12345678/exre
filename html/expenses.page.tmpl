@@ -1,0 +1,33 @@
+{{template "base" .}}
+
+{{define "title"}}Expenses{{end}}
+
+{{define "main"}}
+
+    {{template "datesInput" .}}
+
+    <h2>Latest Expenses</h2>
+    {{if .ExpensesShow}}
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Price</th>
+                <th>Expense</th>
+                <th>Subcategory</th>
+                <th>Category</th>
+            </tr>
+            {{range .ExpensesShow}}
+            <tr>
+                <td class='expense'>{{.Date}}</td>
+                <td class='expense'>{{.Price}}</td>
+                <td class='expense'>{{.Expense}}</td>
+                <td class='expense'>{{.Subcat}}</td>
+                <td class='expense'>{{.Cat}}</td>
+            </tr>
+            {{end}}
+        </table>
+    {{else}}
+        <p>There's nothing to see here... yet!</p>
+    {{end}}
+
+{{end}}
