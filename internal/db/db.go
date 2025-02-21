@@ -225,11 +225,78 @@ func (db *DB) GetExpensesNames() ([]*types.Expense, error) {
 	return dest, nil
 }
 
-func (db *DB) AddExpense(expenses *types.ExpenseAdd) error {
+func (db *DB) AddExpense(expense *types.ExpenseAdd) error {
 	var row *sql.Rows
 	var err error
-	var stmt string
 	
+	row, err = db.db.Query("select id from expense where name = $1 and subcat_id = "+
+			 "(select id from subcat where name = $2)", expense.Name, expense.Subcat)
+	if err != nil {
+		return fmt.Errorf("expenseID select error: %v", err)
+	}
+	defer row.Close()
+	var expenseID int
+	if row.Next() {
+		row.Scan(&expenseID)
+	}
+	row, err = db.db.Query("select id from purchase where purchase_date = $1 and city_id = "+
+			 "(select id from city where city = $2)", expense.Date, expense.City)
+	if err != nil {
+		return fmt.Errorf("purchaseID select error: %v", err)
+	}
+	defer row.Close()
+	var purchaseID int
+	if row.Next() {
+		row.Scan(&purchaseID)
+	}
+	
+	tx, err := db.db.Begin()
+	if err != nil {
+		return err
+	}
+	if purchaseID == 0 {
+		row, err := tx.Query("insert into purchase (purchase_date, city_id, online)"+
+				 "select $1, city.id, $2 from city where city.city = $3 returning id",
+			expense.Date, expense.Online, expense.City)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("purchase insert error: %v", err)
+		}
+		defer row.Close()
+		for row.Next() {
+			err = row.Scan(&purchaseID)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+	
+	if expenseID == 0 {
+		row, err = tx.Query("insert into expense (name, subcat_id, nds) "+
+				 "select $1, subcat.id, $2 from subcat where subcat.name = $3 returning id",
+			expense.Name, expense.NDS, expense.Subcat)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("expense insert error: %v", err)
+		}
+		defer row.Close()
+		for row.Next() {
+			err = row.Scan(&expenseID)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+	_, err = tx.Exec("insert into purchase_check (expense_id, purchase_id, count, price) values ($1,$2,$3,$4)",
+		expenseID, purchaseID, expense.Count, expense.Price)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("purchase_check insert error: %v", err)
+	}
+	tx.Commit()
+	return nil
 }
 
 func openDB(dsn string) (*sql.DB, error) {
