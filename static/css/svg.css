@@ -1,0 +1,15 @@
+/* Tooltip inside SVG */
+.tooltip_graph{
+    font-family: Arial, sans-serif;
+    font-size: 30px;
+    fill: black; /* White text for visibility */
+    text-anchor: middle; /* Center align the text */
+    pointer-events: none; /* Prevent the tooltip from interfering with mouse events */
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.2s ease; /* Smooth fade-in */
+}
+
+/* Show the tooltip when hovering on the sector */
+.sector:hover .tooltip_graph {
+    opacity: 1; /* Make the tooltip visible */
+}

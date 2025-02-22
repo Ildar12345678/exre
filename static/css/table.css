@@ -1,0 +1,60 @@
+.table-container {
+    max-width: 800px;
+    margin: 0 auto;
+    overflow-x: auto; /* For responsiveness */
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    position: relative; /* Ensures tooltip positioning works */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+thead {
+    background-color: #007BFF;
+    color: white;
+}
+
+thead th {
+    padding: 12px 15px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+tbody tr {
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.3s;
+    position: relative; /* Needed for absolute positioning of tooltip */
+}
+
+tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Table cell styling */
+tbody td {
+    padding: 12px 15px;
+    font-size: 14px;
+    position: relative; /* Ensures tooltip appears inside the row */
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    table {
+        font-size: 12px;
+    }
+
+    thead th, tbody td {
+        padding: 8px 10px;
+    }
+}
