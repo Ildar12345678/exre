@@ -61,8 +61,10 @@ func getDate(dateStr string, numDay int) (date time.Time, err error) {
 	return
 }
 
-func calcSectorsInGraph(total int, sectors []int) [][]string {
-	colors := []string{"red", "blue", "brown", "green", "black", "yellow", "pink"}
+// calcSectorsInGraph is used to calculate path's coordinates attributes for svg drawing
+// returned data is slice of path's. single slice is a slice of attributes
+func calcSectorsInGraph(total int, sectors []types.Statistics) [][]string {
+	colors := []string{"red", "blue", "brown", "green", "black", "yellow", "pink", "white", "orange"}
 	result := make([][]string, len(sectors))
 	type point struct {
 		x, y int
@@ -75,11 +77,11 @@ func calcSectorsInGraph(total int, sectors []int) [][]string {
 	if len(sectors) == 1 {
 		return [][]string{{fmt.Sprintf("M%d,%d L%d,%d A%d,%d 0 1 1 %d,%d A%d,%d 0 1 1 %d,%d z",
 			center.x, center.y, xStart, yStart, radius, radius, xStart, yStart+2*radius, radius, radius, xStart, yStart),
-			"red"}}
+			"red", fmt.Sprintf("%d", int(sectors[0].SumSubcat)), sectors[0].Cat}}
 	}
 	for i := 0; i < len(sectors); i++ {
 		rotFlag := 0
-		sectorDegree := 2 * math.Pi * float64(sectors[i]) / float64(total)
+		sectorDegree := 2 * math.Pi * float64(sectors[i].SumSubcat) / float64(total)
 		degree += sectorDegree
 		if sectorDegree >= math.Pi {
 			rotFlag = 1

@@ -26,6 +26,7 @@ func (a *App) ExpensesGet(c *gin.Context) {
 		a.clientError(c.Writer, http.StatusBadRequest)
 		return
 	}
+	// subcat := c.Query("date_high")
 	
 	if dateHigh.Sub(dateLow) < 0 {
 		a.clientError(c.Writer, http.StatusBadRequest)
@@ -48,13 +49,13 @@ func (a *App) ExpensesGet(c *gin.Context) {
 }
 
 func (a *App) ExpensesPost(c *gin.Context) {
-	dates := types.Dates{}
-	if err := c.Bind(&dates); err != nil {
+	filter := types.FilterExpenses{}
+	if err := c.Bind(&filter); err != nil {
 		fmt.Println(err)
 		a.clientError(c.Writer, http.StatusBadRequest)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/expense?date_low=%s&date_high=%s", dates.DateLow, dates.DateHigh))
+	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/expense?subcat=%s&date_low=%s&date_high=%s", filter.Subcat, filter.DateLow, filter.DateHigh))
 }
 
 func (a *App) StatGet(c *gin.Context) {
@@ -101,15 +102,20 @@ func (a *App) StatGet(c *gin.Context) {
 	pngSubcat := make([][]string, len(stats))
 	pngCat := make([][]string, len(sumCats))
 	
-	// sumSubcatsSlice and sumCatsSlice are needed for proper calculations of sectors shape
-	// convert data to []int
-	sumSubcatsSlice := make([]int, 0, len(stats))
+	// sumSubcatsSlice and sumCatsSlice are needed for proper calculations of sectors shape and showing this data in graph
+	sumSubcatsSlice := make([]types.Statistics, 0, len(stats))
 	for i := 0; i < len(stats); i++ {
-		sumSubcatsSlice = append(sumSubcatsSlice, int(stats[i].SumSubcat))
+		sumSubcatsSlice = append(sumSubcatsSlice, types.Statistics{
+			Cat:       stats[i].Subcat,
+			SumSubcat: stats[i].SumSubcat,
+		})
 	}
-	sumCatsSlice := make([]int, 0, len(sumCats))
-	for _, v := range sumCats {
-		sumCatsSlice = append(sumCatsSlice, v)
+	sumCatsSlice := make([]types.Statistics, 0, len(sumCats))
+	for k, v := range sumCats {
+		sumCatsSlice = append(sumCatsSlice, types.Statistics{
+			Cat:       k,
+			SumSubcat: float32(v),
+		})
 	}
 	pngSubcat = calcSectorsInGraph(sumTotal, sumSubcatsSlice)
 	pngCat = calcSectorsInGraph(sumTotal, sumCatsSlice)
@@ -125,7 +131,7 @@ func (a *App) StatGet(c *gin.Context) {
 }
 
 func (a *App) StatPost(c *gin.Context) {
-	dates := types.Dates{}
+	dates := types.FilterExpenses{}
 	if err := c.Bind(&dates); err != nil {
 		a.clientError(c.Writer, http.StatusBadRequest)
 		return
@@ -169,8 +175,6 @@ func (a *App) AddExpenseGet(c *gin.Context) {
 		Online:      []string{"true", "false"},
 		Nds:         []string{"10", "20", "0"},
 	}
-	// forms := make([]*types.Form, 0, 1)
-	// if err := a.render(c.Writer, c.Request, "add.page.tmpl", &types.TemplateResult{AddShow: append(forms, &form)}); err != nil {
 	if err := a.render(c.Writer, c.Request, "add.page.tmpl", &types.TemplateResult{AddShow: form}); err != nil {
 		return
 	}
