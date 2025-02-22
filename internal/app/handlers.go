@@ -194,26 +194,7 @@ func (a *App) AddExpensePost(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/add")
 }
 
-func (a *App) AddPost(c *gin.Context) {
-	// e := types.ExpenseAdd{}
-	// if err := c.Bind(&e); err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	c.Request.ParseForm()
-	// c.Request.ParseMultipartForm(32 << 20)
-	// c.Request.FormValue("action")
-	fmt.Println(c.Request.MultipartForm)
-	fmt.Println(c.Request.Form)
-	fmt.Println(c.Request.PostForm)
-	mpd, err := c.MultipartForm()
-	if err == nil {
-		fmt.Println(mpd)
-	}
-	c.Redirect(http.StatusSeeOther, "/add")
-}
-
-func (a *App) Upload(c *gin.Context) {
+func (a *App) UploadExpensesFromJson(c *gin.Context) {
 	mpd, err := c.MultipartForm()
 	if err == nil {
 		file, err := mpd.File["file"][0].Open()
@@ -247,8 +228,13 @@ func (a *App) Upload(c *gin.Context) {
 					check.Items[i].Subcat = uint8(subcat)
 				}
 				check.City = mpd.Value["city"][0]
-				a.db.AddExpense(convertCheckToExpenseAddTypes(&check)...)
-				
+				expensesToAdd := convertCheckToExpenseAddTypes(&check)
+				for i := 0; i < len(expensesToAdd); i++ {
+					if err := a.db.AddExpense(expensesToAdd[i]); err != nil {
+						a.serverError(c.Writer, err)
+						return
+					}
+				}
 			}
 		}
 	}
@@ -262,11 +248,7 @@ func (a *App) Search(c *gin.Context) {
 	}
 }
 
-func (a *App) Click(c *gin.Context) {
-	// c.JSON(http.StatusOK, gin.H{"data": "huyata"})
-	time.Sleep(3 * time.Second)
-}
-
+// addDefaultData is used to add request.URL.Path to data which is transfer to template (for dateInput template)
 func (a *App) addDefaultData(tr *types.TemplateResult, r *http.Request) *types.TemplateResult {
 	if tr == nil {
 		tr = &types.TemplateResult{}
@@ -275,6 +257,7 @@ func (a *App) addDefaultData(tr *types.TemplateResult, r *http.Request) *types.T
 	return tr
 }
 
+// render is general function to send data to responseWriter
 func (a *App) render(w http.ResponseWriter, r *http.Request, name string, tr *types.TemplateResult) error {
 	// Retrieve the appropriate template set from the cache based on the page name
 	// (like 'home.page.tmpl'). If no entry exists in the cache with the
