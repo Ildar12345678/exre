@@ -7,31 +7,38 @@
 
     {{if .Statistics}}
         {{with .Statistics}}
+        <div class='container'>
             <div class="data">
-                <div class="table">
                     <h2>Total - {{.Sum}}</h2>
-
-                    <table>
-                        <tr>
-                            <th>Category</th>
-                            <th>Subcategory</th>
-                            <th>Sum</th>
-                        </tr>
-                        {{range .Statistics}}
-                        <tr>
-                            <td>{{.Cat}}</td>
-                            <td>{{.Subcat}}</td>
-                            <td>{{.SumSubcat}}</td>
-                        </tr>
-                        {{end}}
-                    </table>
-                </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Subcategory</th>
+                                    <th>Sum</th>
+                                </tr>
+                            </thead>
+                                {{range .Statistics}}
+                            <tbody>
+                                <tr>
+                                    <td>{{.Cat}}</td>
+                                    <td>{{.Subcat}}</td>
+                                    <td>{{.SumSubcat}}</td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
             </div>
             <div class='graph'>
                 {{if .PngSubcat}}
                     <svg class='graph'>
                         {{range $i, $path := .PngSubcat}}
-                            <path class='path' d="{{index $path 0}}" fill="{{index $path 1}}" transform="scale(2)"></path>
+                            <g class="sector">
+                                <path class='path' d="{{index $path 0}}" fill="{{index $path 1}}" transform="scale(2)"></path>
+                                <text x="200" y="50" class="tooltip_graph">{{index $path 3}}: {{index $path 2}}</text>
+                            </g>
                         {{end}}
                     </svg>
                 {{else}}
@@ -40,17 +47,18 @@
                 {{if .PngCat}}
                     <svg class='graph'>
                         {{range $i, $path := .PngCat}}
-                            <path class='path' d="{{index $path 0}}" fill="{{index $path 1}}" transform="scale(2)"></path>
+                            <g class="sector">
+                                <path class='path' d="{{index $path 0}}" fill="{{index $path 1}}" transform="scale(2)"></path>
+                                <text x="200" y="50" class="tooltip_graph">{{index $path 3}}: {{index $path 2}}</text>
+                            </g>
                         {{end}}
                     </svg>
                 {{else}}
                     <p>No graph</p>
                 {{end}}
             </div>
-        {{end}}
-        <div class='hide'>
-            <p>lalalala</p>
         </div>
+        {{end}}
     {{else}}
         <p>There's nothing to see here... yet!</p>
     {{end}}

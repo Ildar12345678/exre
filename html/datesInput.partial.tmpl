@@ -1,12 +1,12 @@
 {{define "datesInput"}}
 
-    <form action='{{.URL}}' method='POST'>
-        <div>
+    <div class='form-container'>
+        <form action='{{.URL}}' method='POST'>
             <label>Choose period: </label>
-            <input type='text' name='date_low'></input>
+            <input type='date' name='date_low'></input>
             -
-            <input type='text' name='date_high'></input>
+            <input type='date' name='date_high'></input>
             <input type='submit' value='Send'>
-        </div>
-    </form>
+        </form>
+    </div>
 {{end}}

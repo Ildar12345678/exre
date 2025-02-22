@@ -6,26 +6,31 @@
 
     {{template "datesInput" .}}
 
-    <h2>Latest Expenses</h2>
     {{if .ExpensesShow}}
+      <div class="table-container">
         <table>
-            <tr>
-                <th>Date</th>
-                <th>Price</th>
-                <th>Expense</th>
-                <th>Subcategory</th>
-                <th>Category</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Price</th>
+                    <th>Expense</th>
+                    <th>Subcategory</th>
+                    <th>Category</th>
+                </tr>
+            </thead>
             {{range .ExpensesShow}}
-            <tr>
-                <td class='expense'>{{.Date}}</td>
-                <td class='expense'>{{.Price}}</td>
-                <td class='expense'>{{.Expense}}</td>
-                <td class='expense'>{{.Subcat}}</td>
-                <td class='expense'>{{.Cat}}</td>
-            </tr>
-            {{end}}
+            <tbody>
+                <tr>
+                    <td class='expense'>{{.Date}}</td>
+                    <td class='expense'>{{.Price}}</td>
+                    <td class='expense'>{{.Expense}}</td>
+                    <td class='expense'>{{.Subcat}}</td>
+                    <td class='expense'>{{.Cat}}</td>
+                </tr>
+                {{end}}
+            </tbody>
         </table>
+      </div>
     {{else}}
         <p>There's nothing to see here... yet!</p>
     {{end}}
