@@ -47,6 +47,7 @@ func lastDay(month time.Month) int {
 	}
 }
 
+// getDate is used to convert date from the input string
 func getDate(dateStr string, numDay int) (date time.Time, err error) {
 	if dateStr == "" {
 		date = time.Date(time.Now().Year(), time.Now().Month(), numDay, 0, 0, 0, 0, time.Local)
@@ -91,13 +92,15 @@ func calcSectorsInGraph(total int, sectors []types.Statistics) [][]string {
 		path := fmt.Sprintf("M%d,%d L%d,%d A%d,%d 0 %d 1 %d,%d z",
 			center.x, center.y, xStart, yStart, radius, radius, rotFlag, x, y)
 		color := colors[i%len(colors)]
-		result[i] = []string{path, color}
+		result[i] = []string{path, color, fmt.Sprintf("%d", int(sectors[i].SumSubcat)), sectors[i].Cat}
 		xStart = x
 		yStart = y
 	}
 	return result
 }
 
+// convertCheckToExpenseAddTypes is used to convert types of expenses needed to add
+// first type is expenses added from check, whereas second one is from web page
 func convertCheckToExpenseAddTypes(check *types.Check) (expenses []*types.ExpenseAdd) {
 	expenses = make([]*types.ExpenseAdd, len(check.Items))
 	for i := 0; i < len(expenses); i++ {
@@ -107,8 +110,8 @@ func convertCheckToExpenseAddTypes(check *types.Check) (expenses []*types.Expens
 			Subcat: types.SubCategories[check.Items[i].Subcat],
 			City:   check.City,
 			Online: false,
-			Count:  fmt.Sprintf("%f", check.Items[i].Quantity),
-			Price:  fmt.Sprintf("%f", check.Items[i].Price),
+			Count:  fmt.Sprintf("%d", int(check.Items[i].Quantity)),
+			Price:  fmt.Sprintf("%d", int(check.Items[i].Price)),
 			NDS:    check.Items[i].Nds,
 		}
 	}

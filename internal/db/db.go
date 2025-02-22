@@ -145,25 +145,8 @@ func (db *DB) GetCity() ([]*types.City, error) {
 	return dest, nil
 }
 
-// func (db *DB) GetCat() ([]*types.Cat, error) {
-// 	stmt := "select id, name from cat"
-// 	rows, err := db.db.Query(stmt)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-// 	dest := make([]*types.Cat, 0, 10)
-// 	for rows.Next() {
-// 		var cat types.Cat
-// 		rows.Scan(&cat)
-// 		dest = append(dest, &cat)
-// 	}
-//
-// 	return dest, nil
-// }
-
 func (db *DB) GetSubcat() ([]*types.Subcat, error) {
-	stmt := "select id, name, cat_id from subcat order by cat_id"
+	stmt := "select id, name, cat_id from subcat order by id"
 	rows, err := db.db.Query(stmt)
 	if err != nil {
 		return nil, err
@@ -184,23 +167,6 @@ func (db *DB) GetSubcat() ([]*types.Subcat, error) {
 	}
 	return dest, nil
 }
-
-// func (db *DB) GetSupplier() ([]*types.MOS, error) {
-// 	stmt := "select name, address, id from market_or_supplier"
-// 	rows, err := db.db.Query(stmt)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-// 	dest := make([]*types.MOS, 0, 10)
-// 	for rows.Next() {
-// 		var mos types.MOS
-// 		rows.Scan(&mos)
-// 		dest = append(dest, &mos)
-// 	}
-//
-// 	return dest, nil
-// }
 
 func (db *DB) GetExpensesNames() ([]*types.Expense, error) {
 	stmt := "select id, name, subcat_id, nds from expense"

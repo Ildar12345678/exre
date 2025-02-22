@@ -44,16 +44,15 @@ func NewApp(addr, staticDir, logfile string) (*App, error) {
 func (a *App) routes() http.Handler {
 	router := gin.New()
 	
-	router.Use(a.logRequest2(), a.recoverPanic2(), a.secureHeaders2())
+	router.Use(a.logRequest(), a.recoverPanic(), a.secureHeaders())
 	router.GET("/expense", a.ExpensesGet)
 	router.POST("/expense", a.ExpensesPost)
 	router.GET("/stat", a.StatGet)
 	router.POST("/stat", a.StatPost)
 	router.GET("/add", a.AddExpenseGet)
 	router.POST("/add", a.AddExpensePost)
-	router.POST("/upload", a.Upload)
+	router.POST("/upload", a.UploadExpensesFromJson)
 	router.GET("/search", a.Search)
-	router.GET("/click", a.Click)
 	router.Static("/static/", a.conf.StaticDir)
 	
 	return router
@@ -73,18 +72,4 @@ func (a *App) StartServer() error {
 
 func (a *App) Shutdown(ctx context.Context) error {
 	return a.srv.Shutdown(ctx)
-}
-
-func RunAPIWithHandler() error {
-	// r.GET("/city", handler.GetCity)
-	// r.GET("/cat", handler.GetCat)
-	// r.GET("/subcat", handler.GetSubcat)
-	// r.GET("/supplier", handler.GetSupplier)
-	// r.GET("/expname", handler.GetExpensesNames)
-	// r.GET("/expenses", handler.GetExpenses)
-	// r.GET("/stats", handler.GetStatistics)
-	// r.POST("/stuff", handler.GetStuff)
-	// r.POST("/date", handler.AddDate)
-	// r.POST("/addexpense", handler.AddExpense)
-	return nil
 }

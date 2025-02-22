@@ -41,11 +41,11 @@ func main() {
 		close(idleConnsClosed)
 	}()
 	
-	log.Println("Server exiting")
-	
 	if err := newApp.StartServer(); err != http.ErrServerClosed {
 		// Error starting or closing listener:
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
+	log.Println("Server exiting")
+	
 	<-idleConnsClosed
 }

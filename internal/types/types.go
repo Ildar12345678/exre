@@ -83,9 +83,10 @@ type AddShowForm struct {
 	Nds         []string
 }
 
-type Dates struct {
+type FilterExpenses struct {
 	DateLow  string `form:"date_low"`
 	DateHigh string `form:"date_high"`
+	Subcat   string `form:"subcat"`
 }
 
 type ExpenseAdd struct {
