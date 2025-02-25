@@ -14,19 +14,25 @@
                     </div>
                     <div class='form-group' >
                         <label class='add_label'>Expense name:</label>
-                        <input class='add_input' type='text' name='name' list="expense_name" autocomplete='off'>
+                        {{with .Form.Errors.Get "name"}}
+                            <label class='error'>{{.}}</label>
+                        {{end}}
+                        <input class='add_input' type='text' name='name' value='{{.Form.Values.Get "name"}}' list='expense_name' autocomplete='off'>
                             <datalist id="expense_name">
                                 {{range $.AddShow.ExpenseName}}
-                                    <option value="{{.Name}}">
+                                    <option value="{{.}}">
                                 {{end}}
                             </datalist>
                     </div>
                     <div class='form-group'>
                         <label class='add_label'>Subcat:</label>
-                        <input class='add_input' type='text' name='subcat' list="subcat" autocomplete='off'>
+                        {{with .Form.Errors.Get "subcat"}}
+                            <label class='error'>{{.}}</label>
+                        {{end}}
+                        <input class='add_input' type='text' name='subcat' value='{{.Form.Values.Get "subcat"}}' list="subcat" autocomplete='off'>
                             <datalist id="subcat">
                                 {{range .Subcat}}
-                                    <option value="{{.Name}}">
+                                    <option value="{{.}}">
                                 {{end}}
                             </datalist>
                     </div>
@@ -35,45 +41,49 @@
                         <input class='add_input' type='text' name='city' list="city_names" value='челябинск' autocomplete='off'>
                         <datalist id="city_names">
                             {{range .Cities}}
-                                <option value="{{.City}}">
+                                <option value="{{.}}">
                             {{end}}
                         </datalist>
                     </div>
                     <div class='form-group'>
                         <label class='add_label'>Online:</label>
-                        <input class='add_input' type='text' name='online' list="online_choice" value='false' autocomplete='off'>
-                            <datalist id="online_choice">
-                                {{range .Online}}
-                                    <option value="{{.}}">
-                                {{end}}
-                            </datalist>
+                        {{$exp := or (.Form.Values.Get "online") "false"}}
+                        <input type='radio' name='online' value='false' {{if (eq $exp "false")}}checked{{end}}> false
+                        <input type='radio' name='online' value='true' {{if (eq $exp "true")}}checked{{end}}> true
                     </div>
                     <div class='form-group'>
                         <label class='add_label'>Expense count:</label>
-                        <input class='add_input' type='text' name='count' autocomplete='off'>
+                        {{with .Form.Errors.Get "count"}}
+                            <label class='error'>{{.}}</label>
+                        {{end}}
+                        <input class='add_input' type='text' name='count' value='{{.Form.Values.Get "count"}}' autocomplete='off'>
                     </div>
                     <div class='form-group'>
                         <label class='add_label'>Expense price:</label>
-                        <input class='add_input' type='text' name='price' autocomplete='off'>
+                        {{with .Form.Errors.Get "price"}}
+                            <label class='error'>{{.}}</label>
+                        {{end}}
+                        <input class='add_input' type='text' name='price' value='{{.Form.Values.Get "price"}}' autocomplete='off'>
                     </div>
                     <div class='form-group'>
                         <label class='add_label'>Nds:</label>
-                        <input class='add_input' type='text' name='nds' list="nds" autocomplete='off'>
-                            <datalist id="nds">
-                                {{range .Nds}}
-                                    <option value="{{.}}">
-                                {{end}}
-                            </datalist>
+                        {{with .Form.Errors.Get "nds"}}
+                            <label class='error'>{{.}}</label>
+                        {{end}}
+                        {{$exp := or (.Form.Values.Get "nds") "20"}}
+                        <input type='radio' name='nds' value='20' {{if (eq $exp "20")}}checked{{end}}> 20%
+                        <input type='radio' name='nds' value='10' {{if (eq $exp "10")}}checked{{end}}> 10%
+                        <input type='radio' name='nds' value='0' {{if (eq $exp "0")}}checked{{end}}> 0%
                     </div>
                         <button type='submit'>Add Expense</button>
                 </form>
             </div>
             <div class="form-container">
                 <label class='add_label'>Subcat to ID:</label>
-                <input class='add_input' type='text' name='subcat' list="subcata" autocomplete='off'>
-                    <datalist id="subcata">
+                <input class='add_input' type='text' name='subcat' list="subcat" autocomplete='off'>
+                    <datalist id="subcat">
                         {{range $.AddShow.Subcat}}
-                            <option value="{{.ID}} - {{.Name}}">
+                            <option value="{{.}}">
                         {{end}}
                     </datalist>
             </div>
@@ -84,7 +94,7 @@
                         <input class='add_input' type='text' name='city' list="city_names" value='челябинск' autocomplete='off'>
                         <datalist id="city_names">
                             {{range .Cities}}
-                                <option value="{{.City}}">
+                                <option value="{{.}}">
                             {{end}}
                         </datalist>
                     </div>

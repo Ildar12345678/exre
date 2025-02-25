@@ -186,6 +186,26 @@ func (a *App) AddExpensePost(c *gin.Context) {
 		a.clientError(c.Writer, http.StatusBadRequest)
 		return
 	}
+	form := types.NewForm(&ea)
+	form.Required("date", "name", "subcat", "city", "count", "price")
+	form.SubcatCheck()
+	form.PermittedValues("subcat", types.SubCategories)
+	form.PermittedValues("nds", types.Nds)
+	
+	if !form.Valid() {
+		a.render(c.Writer, c.Request, "add.page.tmpl", &types.TemplateResult{AddShow: types.AddShowForm{
+			Date:        time.Now().Format("2006-01-02"),
+			Cities:      a.cache.dbCache["city"],
+			ExpenseName: a.cache.dbCache["expense"],
+			Subcat:      a.cache.dbCache["subcat"],
+			Online:      []string{"true", "false"},
+			Nds:         []string{"10", "20", "0"},
+			Form:        form,
+		}})
+		return
+	}
+	
+	ea.Subcat = strings.Split(ea.Subcat, "-")[1]
 	
 	if err := a.db.AddExpense(&ea); err != nil {
 		a.serverError(c.Writer, err)
@@ -208,7 +228,6 @@ func (a *App) UploadExpensesFromJson(c *gin.Context) {
 				check.Date = strings.Split(check.Date, "T")[0]
 				subcats := strings.Split(mpd.Value["subcat"][0], " ")
 				if len(check.Items) != len(subcats) {
-					fmt.Println(len(check.Items), len(subcats))
 					a.clientError(c.Writer, http.StatusBadRequest)
 					return
 				}
@@ -221,7 +240,6 @@ func (a *App) UploadExpensesFromJson(c *gin.Context) {
 					}
 					subcat, err := strconv.ParseInt(subcats[i], 10, 64)
 					if err != nil {
-						fmt.Println(err)
 						a.clientError(c.Writer, http.StatusBadRequest)
 						return
 					}

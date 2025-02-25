@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 	"database/sql"
-	"errors"
+	"fmt"
 )
 
 var SubCategories = map[uint8]string{
@@ -22,7 +22,13 @@ var SubCategories = map[uint8]string{
 	29: "услуги", 30: "государству", 31: "подарки", 32: "сотовый", 33: "благотвор", 34: "другое",
 }
 
-var ErrNoRecord = errors.New("no matching record found")
+var Nds = map[uint8]string{
+	0:  "0",
+	10: "10",
+	20: "20",
+}
+
+var ErrNoRecord = fmt.Errorf("no matching record found")
 
 type Subcat struct {
 	ID     int    `db:"id"`
@@ -40,14 +46,6 @@ type Expense struct {
 	Name      string        `db:"name"`
 	Subcat_id int           `db:"subcat_id"`
 	NDS       sql.NullInt32 `db:"nds"`
-}
-
-type Reply struct {
-	Id          int            `db:"id"`
-	Rate        int            `db:"rate"`
-	Description sql.NullString `db:"description"`
-	Mos_id      sql.NullInt32  `db:"mos_id"`
-	Expense_id  sql.NullInt32  `db:"expense_id"`
 }
 
 type Purchase struct {
@@ -75,12 +73,14 @@ type TemplateResult struct {
 }
 
 type AddShowForm struct {
-	Date        string
-	Cities      []*City
-	ExpenseName []*Expense
-	Subcat      []*Subcat
-	Online      []string
-	Nds         []string
+	Date         string
+	Cities       []string
+	ExpenseName  []string
+	Subcat       []string
+	Online       []string
+	Nds          []string
+	SearchResult []*ExpenseSearch
+	Form         *Form
 }
 
 type FilterExpenses struct {
@@ -97,7 +97,7 @@ type ExpenseAdd struct {
 	Online bool   `form:"online"`
 	Count  string `form:"count"`
 	Price  string `form:"price"`
-	NDS    int    `form:"nds"`
+	NDS    string `form:"nds"`
 }
 
 type StatAndSum struct {
