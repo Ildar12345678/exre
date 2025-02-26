@@ -66,23 +66,24 @@ type PurchaseCheck struct {
 }
 
 type TemplateResult struct {
-	URL          string
-	DateLow      string
-	DateHigh     string
-	ExpensesShow []*ExpenseShow
-	Statistics   StatAndSum
-	AddShow      AddShowForm
+	URL           string
+	DateLow       string
+	DateHigh      string
+	SearchPattern string
+	ExpensesShow  []*ExpenseShow
+	Statistics    StatAndSum
+	AddShow       AddExpenseShowForm
+	SearchResult  []*ExpenseSearch
 }
 
-type AddShowForm struct {
-	Date         string
-	Cities       []string
-	ExpenseName  []string
-	Subcat       []string
-	Online       []string
-	Nds          []string
-	SearchResult []*ExpenseSearch
-	Form         *Form
+type AddExpenseShowForm struct {
+	Date        string
+	Cities      []string
+	ExpenseName []string
+	Subcat      []string
+	Online      []string
+	Nds         []string
+	Form        *Form
 }
 
 type FilterExpenses struct {
@@ -124,9 +125,9 @@ type Statistics struct {
 }
 
 type ExpenseSearch struct {
-	Name  string    `db:"name"`
-	Price string    `json:"price"`
-	Date  time.Time `json:"date"`
+	Name  string `db:"name"`
+	Price string `json:"price"`
+	Date  string `json:"date"`
 }
 
 // all types below refer to check parse

@@ -108,18 +108,17 @@ where e.id = c.expense_id and p.id = c.purchase_id and e.name like '%'||$1||'%' 
 		defer rows.Close()
 		for rows.Next() {
 			var expense types.ExpenseSearch
-			rows.Scan(&expense)
+			err = rows.Scan(&expense.Name, &expense.Price, &expense.Date)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return nil, types.ErrNoRecord
-				} else {
-					return nil, err
-				}
+				return nil, err
 			}
+			expense.Date = strings.Split(expense.Date, "T")[0]
 			dest = append(dest, &expense)
 		}
 	}
-	
+	if len(dest) == 0 {
+		return nil, types.ErrNoRecord
+	}
 	return dest, nil
 }
 

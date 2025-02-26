@@ -4,6 +4,35 @@
 
 {{define "main"}}
 
-    <h2>Try to search some expenses</h2>
-    <p>There's nothing to see here yet!</p>
+    <div class='form-container'>
+        <form action='/search' method='POST'>
+            <label>Search Expense: </label>
+            <input type='text' name='search'></input>
+            <input type='submit' value='Send'>
+        </form>
+    </div>
+    {{if .SearchResult}}
+          <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                {{range .SearchResult}}
+                <tbody>
+                    <tr>
+                        <td class='expense'>{{.Name}}</td>
+                        <td class='expense'>{{.Price}}</td>
+                        <td class='expense'>{{.Date}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+          </div>
+        {{else}}
+            <p>There's nothing to see here... yet!</p>
+        {{end}}
 {{end}}

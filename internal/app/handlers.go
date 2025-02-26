@@ -146,7 +146,7 @@ func (a *App) StatPost(c *gin.Context) {
 }
 
 func (a *App) AddExpenseGet(c *gin.Context) {
-	form := types.AddShowForm{
+	form := types.AddExpenseShowForm{
 		Date:        time.Now().Format("2006-01-02"),
 		Cities:      a.cache.dbCache["city"],
 		ExpenseName: a.cache.dbCache["expense"],
@@ -173,7 +173,7 @@ func (a *App) AddExpensePost(c *gin.Context) {
 	form.PermittedValues("nds", types.Nds)
 	
 	if !form.Valid() {
-		a.render(c.Writer, c.Request, "add.page.tmpl", &types.TemplateResult{AddShow: types.AddShowForm{
+		a.render(c.Writer, c.Request, "add.page.tmpl", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
 			Date:        time.Now().Format("2006-01-02"),
 			Cities:      a.cache.dbCache["city"],
 			ExpenseName: a.cache.dbCache["expense"],
@@ -233,21 +233,58 @@ func (a *App) UploadExpensesFromJson(c *gin.Context) {
 				}
 				check.City = mpd.Value["city"][0]
 				expensesToAdd := convertCheckToExpenseAddTypes(&check)
+				expenseIDs = make([]any, len(expensesToAdd))
 				for i := 0; i < len(expensesToAdd); i++ {
-					if err := a.db.AddExpense(expensesToAdd[i]); err != nil {
+					expenseID, err := a.db.AddExpense(expensesToAdd[i])
+					if err != nil {
 						a.serverError(c.Writer, err)
 						return
 					}
+					expenseIDs[i] = expenseID
 				}
 			}
 		}
 	}
+	if ok, err := a.cache.updateCache("expense", expenseIDs...); !ok {
+		a.logger.Errorf("cache is not updated: %s", err.Error())
+	}
 	c.Redirect(http.StatusSeeOther, "/add")
 }
 
-func (a *App) Search(c *gin.Context) {
+func (a *App) SearchGet(c *gin.Context) {
 	
-	if err := a.render(c.Writer, c.Request, "search.page.tmpl", nil); err != nil {
+	if err := a.render(c.Writer, c.Request, "search.page.tmpl", &types.TemplateResult{
+		SearchResult: nil,
+	}); err != nil {
+		return
+	}
+}
+
+func (a *App) SearchPost(c *gin.Context) {
+	var search string
+	if err := c.Request.ParseForm(); err != nil {
+		a.logger.Errorf("error while bind in Search: %s", err.Error())
+		a.clientError(c.Writer, http.StatusBadRequest)
+		return
+	}
+	search = c.Request.Form["search"][0]
+	if search == "" {
+		a.clientError(c.Writer, http.StatusBadRequest)
+		return
+	}
+	searchResult, err := a.db.SearchExpense(search)
+	if err != nil {
+		if errors.Is(err, types.ErrNoRecord) {
+			a.notFound(c.Writer)
+		} else {
+			a.serverError(c.Writer, err)
+			return
+		}
+	}
+	
+	if err := a.render(c.Writer, c.Request, "search.page.tmpl", &types.TemplateResult{
+		SearchResult: searchResult,
+	}); err != nil {
 		return
 	}
 }

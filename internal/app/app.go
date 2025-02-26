@@ -52,7 +52,8 @@ func (a *App) routes() http.Handler {
 	router.GET("/add", a.AddExpenseGet)
 	router.POST("/add", a.AddExpensePost)
 	router.POST("/upload", a.UploadExpensesFromJson)
-	router.GET("/search", a.Search)
+	router.GET("/search", a.SearchGet)
+	router.POST("/search", a.SearchPost)
 	router.Static("/static/", a.conf.StaticDir)
 	
 	return router
@@ -71,6 +72,8 @@ func (a *App) StartServer() error {
 }
 
 func (a *App) Shutdown(ctx context.Context) error {
-	a.logger.Errorf("error while closing DB: %s", dblayer.CloseDB(a.db).Error())
+	if err := dblayer.CloseDB(a.db); err != nil {
+		a.logger.Errorf("error while closing DB:", err.Error())
+	}
 	return a.srv.Shutdown(ctx)
 }
