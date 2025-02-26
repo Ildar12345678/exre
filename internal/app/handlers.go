@@ -140,40 +140,14 @@ func (a *App) StatPost(c *gin.Context) {
 }
 
 func (a *App) AddExpenseGet(c *gin.Context) {
-	cities, err := a.db.GetCity()
-	if err != nil {
-		if errors.Is(err, types.ErrNoRecord) {
-			a.notFound(c.Writer)
-		} else {
-			a.serverError(c.Writer, err)
-		}
-		return
-	}
-	subcats, err := a.db.GetSubcat()
-	if err != nil {
-		if errors.Is(err, types.ErrNoRecord) {
-			a.notFound(c.Writer)
-		} else {
-			a.serverError(c.Writer, err)
-		}
-		return
-	}
-	expenseNames, err := a.db.GetExpensesNames()
-	if err != nil {
-		if errors.Is(err, types.ErrNoRecord) {
-			a.notFound(c.Writer)
-		} else {
-			a.serverError(c.Writer, err)
-		}
-		return
-	}
 	form := types.AddShowForm{
 		Date:        time.Now().Format("2006-01-02"),
-		Cities:      cities,
-		ExpenseName: expenseNames,
-		Subcat:      subcats,
+		Cities:      a.cache.dbCache["city"],
+		ExpenseName: a.cache.dbCache["expense"],
+		Subcat:      a.cache.dbCache["subcat"],
 		Online:      []string{"true", "false"},
 		Nds:         []string{"10", "20", "0"},
+		Form:        &types.Form{},
 	}
 	if err := a.render(c.Writer, c.Request, "add.page.tmpl", &types.TemplateResult{AddShow: form}); err != nil {
 		return
@@ -207,15 +181,21 @@ func (a *App) AddExpensePost(c *gin.Context) {
 	
 	ea.Subcat = strings.Split(ea.Subcat, "-")[1]
 	
-	if err := a.db.AddExpense(&ea); err != nil {
+	expenseID, err := a.db.AddExpense(&ea)
+	if err != nil {
 		a.serverError(c.Writer, err)
 		return
 	}
+	if ok, err := a.cache.updateCache("expense", expenseID); !ok {
+		a.logger.Errorf("cache is not updated: %s", err.Error())
+	}
+	
 	c.Redirect(http.StatusSeeOther, "/add")
 }
 
 func (a *App) UploadExpensesFromJson(c *gin.Context) {
 	mpd, err := c.MultipartForm()
+	var expenseIDs []any
 	if err == nil {
 		file, err := mpd.File["file"][0].Open()
 		defer file.Close()
@@ -280,7 +260,7 @@ func (a *App) render(w http.ResponseWriter, r *http.Request, name string, tr *ty
 	// Retrieve the appropriate template set from the cache based on the page name
 	// (like 'home.page.tmpl'). If no entry exists in the cache with the
 	// provided name, call the serverError helper method that we made earlier.
-	ts, ok := a.templateCache[name]
+	ts, ok := a.cache.templateCache[name]
 	if !ok {
 		a.serverError(w, fmt.Errorf("The template %s does not exist", name))
 		return fmt.Errorf("no required template")

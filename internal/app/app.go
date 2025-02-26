@@ -5,18 +5,17 @@ import (
 	"expenses2/internal/config"
 	"net/http"
 	"expenses2/internal/db"
-	"html/template"
 	"github.com/gin-gonic/gin"
 	"context"
 )
 
 type App struct {
-	logger        *log.Logger
-	conf          *config.AppConfig
-	srv           *http.Server
-	db            *dblayer.DB
-	templateCache map[string]*template.Template
-	shutdownCh    chan struct{}
+	logger     *log.Logger
+	conf       *config.AppConfig
+	srv        *http.Server
+	db         *dblayer.DB
+	cache      *cache
+	shutdownCh chan struct{}
 }
 
 func NewApp(addr, staticDir, logfile string) (*App, error) {
@@ -25,7 +24,7 @@ func NewApp(addr, staticDir, logfile string) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	tc, err := newTemplateCache("./html")
+	cache, err := newCache("./html", db)
 	if err != nil {
 		return nil, err
 	}

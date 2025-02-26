@@ -8,6 +8,7 @@ import (
 	"strings"
 	"errors"
 	_ "github.com/lib/pq"
+	"strconv"
 )
 
 type DB struct {
@@ -168,9 +169,16 @@ func (db *DB) GetSubcat() ([]*types.Subcat, error) {
 	return dest, nil
 }
 
-func (db *DB) GetExpensesNames() ([]*types.Expense, error) {
+func (db *DB) GetExpensesNames(ids ...any) ([]*types.Expense, error) {
 	stmt := "select id, name, subcat_id, nds from expense"
-	rows, err := db.db.Query(stmt)
+	if len(ids) > 0 {
+		placeholders := make([]string, len(ids))
+		for i := range ids {
+			placeholders[i] = "$" + strconv.Itoa(i+1)
+		}
+		stmt += " WHERE id IN (" + strings.Join(placeholders, ", ") + ")"
+	}
+	rows, err := db.db.Query(stmt, ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -191,14 +199,14 @@ func (db *DB) GetExpensesNames() ([]*types.Expense, error) {
 	return dest, nil
 }
 
-func (db *DB) AddExpense(expense *types.ExpenseAdd) error {
+func (db *DB) AddExpense(expense *types.ExpenseAdd) (int, error) {
 	var row *sql.Rows
 	var err error
 	
 	row, err = db.db.Query("select id from expense where name = $1 and subcat_id = "+
 			 "(select id from subcat where name = $2)", expense.Name, expense.Subcat)
 	if err != nil {
-		return fmt.Errorf("expenseID select error: %v", err)
+		return 0, fmt.Errorf("expenseID select error: %v", err)
 	}
 	defer row.Close()
 	var expenseID int
@@ -208,7 +216,7 @@ func (db *DB) AddExpense(expense *types.ExpenseAdd) error {
 	row, err = db.db.Query("select id from purchase where purchase_date = $1 and city_id = "+
 			 "(select id from city where city = $2)", expense.Date, expense.City)
 	if err != nil {
-		return fmt.Errorf("purchaseID select error: %v", err)
+		return 0, fmt.Errorf("purchaseID select error: %v", err)
 	}
 	defer row.Close()
 	var purchaseID int
@@ -218,7 +226,7 @@ func (db *DB) AddExpense(expense *types.ExpenseAdd) error {
 	
 	tx, err := db.db.Begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if purchaseID == 0 {
 		row, err := tx.Query("insert into purchase (purchase_date, city_id, online)"+
@@ -226,14 +234,14 @@ func (db *DB) AddExpense(expense *types.ExpenseAdd) error {
 			expense.Date, expense.Online, expense.City)
 		if err != nil {
 			tx.Rollback()
-			return fmt.Errorf("purchase insert error: %v", err)
+			return 0, fmt.Errorf("purchase insert error: %v", err)
 		}
 		defer row.Close()
 		for row.Next() {
 			err = row.Scan(&purchaseID)
 			if err != nil {
 				tx.Rollback()
-				return err
+				return 0, err
 			}
 		}
 	}
@@ -244,14 +252,14 @@ func (db *DB) AddExpense(expense *types.ExpenseAdd) error {
 			expense.Name, expense.NDS, expense.Subcat)
 		if err != nil {
 			tx.Rollback()
-			return fmt.Errorf("expense insert error: %v", err)
+			return 0, fmt.Errorf("expense insert error: %v", err)
 		}
 		defer row.Close()
 		for row.Next() {
 			err = row.Scan(&expenseID)
 			if err != nil {
 				tx.Rollback()
-				return err
+				return 0, err
 			}
 		}
 	}
@@ -259,10 +267,10 @@ func (db *DB) AddExpense(expense *types.ExpenseAdd) error {
 		expenseID, purchaseID, expense.Count, expense.Price)
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("purchase_check insert error: %v", err)
+		return 0, fmt.Errorf("purchase_check insert error: %v", err)
 	}
 	tx.Commit()
-	return nil
+	return expenseID, nil
 }
 
 func openDB(dsn string) (*sql.DB, error) {
