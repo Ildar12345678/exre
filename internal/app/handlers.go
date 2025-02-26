@@ -43,7 +43,11 @@ func (a *App) ExpensesGet(c *gin.Context) {
 		return
 	}
 	
-	if err := a.render(c.Writer, c.Request, "expenses.page.tmpl", &types.TemplateResult{ExpensesShow: expensesShow}); err != nil {
+	if err := a.render(c.Writer, c.Request, "expenses.page.tmpl", &types.TemplateResult{
+		DateLow:      dateLow.Format("2006-01-02"),
+		DateHigh:     dateHigh.Format("2006-01-02"),
+		ExpensesShow: expensesShow,
+	}); err != nil {
 		return
 	}
 }
@@ -120,12 +124,15 @@ func (a *App) StatGet(c *gin.Context) {
 	pngSubcat = calcSectorsInGraph(sumTotal, sumSubcatsSlice)
 	pngCat = calcSectorsInGraph(sumTotal, sumCatsSlice)
 	
-	if err := a.render(c.Writer, c.Request, "statistics.page.tmpl", &types.TemplateResult{Statistics: types.StatAndSum{
-		Sum:        sumTotal,
-		Statistics: stats,
-		PngSubcat:  pngSubcat,
-		PngCat:     pngCat,
-	}}); err != nil {
+	if err := a.render(c.Writer, c.Request, "statistics.page.tmpl", &types.TemplateResult{
+		DateLow:  dateLow.Format("2006-01-02"),
+		DateHigh: dateHigh.Format("2006-01-02"),
+		Statistics: types.StatAndSum{
+			Sum:        sumTotal,
+			Statistics: stats,
+			PngSubcat:  pngSubcat,
+			PngCat:     pngCat,
+		}}); err != nil {
 		return
 	}
 }

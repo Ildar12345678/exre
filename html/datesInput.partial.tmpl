@@ -3,9 +3,9 @@
     <div class='form-container'>
         <form action='{{.URL}}' method='POST'>
             <label>Choose period: </label>
-            <input type='date' name='date_low'></input>
+            <input type='date' name='date_low' value='{{.DateLow}}'></input>
             -
-            <input type='date' name='date_high'></input>
+            <input type='date' name='date_high' value='{{.DateHigh}}'></input>
             <input type='submit' value='Send'>
         </form>
     </div>

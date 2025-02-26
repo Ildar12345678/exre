@@ -67,6 +67,8 @@ type PurchaseCheck struct {
 
 type TemplateResult struct {
 	URL          string
+	DateLow      string
+	DateHigh     string
 	ExpensesShow []*ExpenseShow
 	Statistics   StatAndSum
 	AddShow      AddShowForm
