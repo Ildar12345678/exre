@@ -286,8 +286,6 @@ func openDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-func closeDB(db *DB) {
-	if err := db.db.Close(); err != nil {
-		fmt.Println("error while closing DB:", err)
-	}
+func CloseDB(db *DB) error {
+	return db.db.Close()
 }

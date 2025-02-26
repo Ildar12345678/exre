@@ -26,7 +26,6 @@ func (a *App) ExpensesGet(c *gin.Context) {
 		a.clientError(c.Writer, http.StatusBadRequest)
 		return
 	}
-	// subcat := c.Query("date_high")
 	
 	if dateHigh.Sub(dateLow) < 0 {
 		a.clientError(c.Writer, http.StatusBadRequest)
@@ -55,7 +54,7 @@ func (a *App) ExpensesGet(c *gin.Context) {
 func (a *App) ExpensesPost(c *gin.Context) {
 	filter := types.FilterExpenses{}
 	if err := c.Bind(&filter); err != nil {
-		fmt.Println(err)
+		a.logger.Errorf("error while bind in ExpensesPost: %s", err.Error())
 		a.clientError(c.Writer, http.StatusBadRequest)
 		return
 	}

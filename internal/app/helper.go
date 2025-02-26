@@ -112,7 +112,7 @@ func convertCheckToExpenseAddTypes(check *types.Check) (expenses []*types.Expens
 			Online: false,
 			Count:  fmt.Sprintf("%d", int(check.Items[i].Quantity)),
 			Price:  fmt.Sprintf("%d", int(check.Items[i].Price)),
-			NDS:    check.Items[i].Nds,
+			NDS:    fmt.Sprintf("%d", check.Items[i].Nds),
 		}
 	}
 	return

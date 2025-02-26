@@ -33,14 +33,15 @@ func NewApp(addr, staticDir, logfile string) (*App, error) {
 		return nil, err
 	}
 	return &App{
-		logger:        logger,
-		conf:          conf,
-		db:            db,
-		templateCache: tc,
+		logger: logger,
+		conf:   conf,
+		db:     db,
+		cache:  cache,
 	}, nil
 }
 
 func (a *App) routes() http.Handler {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	
 	router.Use(a.logRequest(), a.recoverPanic(), a.secureHeaders())
@@ -70,5 +71,6 @@ func (a *App) StartServer() error {
 }
 
 func (a *App) Shutdown(ctx context.Context) error {
+	a.logger.Errorf("error while closing DB: %s", dblayer.CloseDB(a.db).Error())
 	return a.srv.Shutdown(ctx)
 }
