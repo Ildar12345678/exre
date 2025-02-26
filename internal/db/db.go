@@ -288,3 +288,12 @@ func openDB(dsn string) (*sql.DB, error) {
 func CloseDB(db *DB) error {
 	return db.db.Close()
 }
+
+// todo
+/*
+select e.id, p.purchase_date date, e.name, s.name, pc.price, pc.count, p.online, c.city from expense e
+    left join subcat s on e.subcat_id = s.id
+		left outer join purchase_check pc on e.id = pc.expense_id
+		left join purchase p on pc.purchase_id = p.id
+		left join city c on p.city_id = c.id;
+*/

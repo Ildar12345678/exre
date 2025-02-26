@@ -24,7 +24,7 @@ func main() {
 		panic(err)
 	}
 	
-	idleConnsClosed := make(chan struct{})
+	// idleConnsClosed := make(chan struct{})
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -38,7 +38,7 @@ func main() {
 			// Error from closing listeners, or context timeout:
 			log.Printf("HTTP server Shutdown: %v", err)
 		}
-		close(idleConnsClosed)
+		// close(idleConnsClosed)
 	}()
 	
 	if err := newApp.StartServer(); err != http.ErrServerClosed {
@@ -47,5 +47,5 @@ func main() {
 	}
 	log.Println("Server exiting")
 	
-	<-idleConnsClosed
+	// <-idleConnsClosed
 }
