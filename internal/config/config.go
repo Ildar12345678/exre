@@ -3,6 +3,7 @@ package config
 type AppConfig struct {
 	Addr      string // default 5000
 	StaticDir string // default ./static
+	LogDir    string // default ./logs
 	LogFile   string // default stdout
 	DBType    string // default sqlite
 	DBPath    string // default ./db

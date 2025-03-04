@@ -29,7 +29,7 @@ func NewApp(appConfig *config.AppConfig) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger, err := log.NewLog(appConfig.LogFile)
+	logger, err := log.NewLog("./logs", appConfig.LogFile)
 	if err != nil {
 		return nil, err
 	}
