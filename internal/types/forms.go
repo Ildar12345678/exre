@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// Formable interface is needed to transform data from form (after gin Bind function) to url.Values type
 type Formable interface {
 	Process() url.Values
 }
@@ -28,13 +29,6 @@ func (f *Form) Required(fields ...string) {
 		if strings.TrimSpace(value) == "" {
 			f.Errors.Add(field, "This field cannot be blank")
 		}
-	}
-}
-
-func (f *Form) SubcatCheck() {
-	subcats := f.Values.Get("subcat")
-	if len(strings.Split(subcats, "-")) != 2 {
-		f.Errors.Add("subcat", "Incorrect value")
 	}
 }
 

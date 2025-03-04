@@ -7,14 +7,13 @@ import (
 
 func (e *ExpenseAdd) Process() url.Values {
 	vals := map[string][]string{
-		"date":   {e.Date},
-		"name":   {e.Name},
-		"subcat": {e.Subcat},
-		"city":   {e.City},
-		"online": {fmt.Sprintf("%t", e.Online)},
-		"count":  {e.Count},
-		"price":  {e.Price},
-		"nds":    {e.NDS},
+		"date":     {e.Date},
+		"name":     {e.Name},
+		"category": {e.Category},
+		"city":     {e.City},
+		"online":   {fmt.Sprintf("%t", e.Online)},
+		"count":    {fmt.Sprintf("%f", e.Count)},
+		"price":    {e.Price},
 	}
 	return vals
 }
