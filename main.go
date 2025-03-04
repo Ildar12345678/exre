@@ -10,16 +10,20 @@ import (
 	"time"
 	"context"
 	"net/http"
+	"expenses2/internal/config"
 )
 
 func main() {
 	addr := flag.String("addr", ":5000", "listening app port")
 	staticDir := flag.String("static", "./static", "location of static files")
 	logFile := flag.String("log", "stdout", "file to log messages")
+	db := flag.String("db", "sqlite", "choose db to store your data")
 	
 	flag.Parse()
 	
-	newApp, err := app.NewApp(*addr, *staticDir, *logFile)
+	conf := config.NewAppConfig(*addr, *staticDir, *logFile, *db)
+	
+	newApp, err := app.NewApp(conf)
 	if err != nil {
 		panic(err)
 	}

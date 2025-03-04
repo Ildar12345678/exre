@@ -19,19 +19,19 @@
                         {{end}}
                         <input class='add_input' type='text' name='name' value='{{.Form.Values.Get "name"}}' list='expense_name' autocomplete='off'>
                             <datalist id="expense_name">
-                                {{range $.AddShow.ExpenseName}}
+                                {{range .Name}}
                                     <option value="{{.}}">
                                 {{end}}
                             </datalist>
                     </div>
                     <div class='form-group'>
-                        <label class='add_label'>Subcat:</label>
-                        {{with .Form.Errors.Get "subcat"}}
+                        <label class='add_label'>Category:</label>
+                        {{with .Form.Errors.Get "category"}}
                             <label class='error'>{{.}}</label>
                         {{end}}
-                        <input class='add_input' type='text' name='subcat' value='{{.Form.Values.Get "subcat"}}' list="subcat" autocomplete='off'>
-                            <datalist id="subcat">
-                                {{range .Subcat}}
+                        <input class='add_input' type='text' name='category' value='{{.Form.Values.Get "category"}}' list="category" autocomplete='off'>
+                            <datalist id="category">
+                                {{range .Category}}
                                     <option value="{{.}}">
                                 {{end}}
                             </datalist>
@@ -65,27 +65,8 @@
                         {{end}}
                         <input class='add_input' type='text' name='price' value='{{.Form.Values.Get "price"}}' autocomplete='off'>
                     </div>
-                    <div class='form-group'>
-                        <label class='add_label'>Nds:</label>
-                        {{with .Form.Errors.Get "nds"}}
-                            <label class='error'>{{.}}</label>
-                        {{end}}
-                        {{$exp := or (.Form.Values.Get "nds") "20"}}
-                        <input type='radio' name='nds' value='20' {{if (eq $exp "20")}}checked{{end}}> 20%
-                        <input type='radio' name='nds' value='10' {{if (eq $exp "10")}}checked{{end}}> 10%
-                        <input type='radio' name='nds' value='0' {{if (eq $exp "0")}}checked{{end}}> 0%
-                    </div>
                         <button type='submit'>Add Expense</button>
                 </form>
-            </div>
-            <div class="form-container">
-                <label class='add_label'>Subcat to ID:</label>
-                <input class='add_input' type='text' name='subcat' list="subcat" autocomplete='off'>
-                    <datalist id="subcat">
-                        {{range $.AddShow.Subcat}}
-                            <option value="{{.}}">
-                        {{end}}
-                    </datalist>
             </div>
             <div class='form-container'>
                 <form class='form' action="/upload" method="post" enctype="multipart/form-data">
@@ -99,8 +80,8 @@
                         </datalist>
                     </div>
                     <div class='form-group'>
-                        <label for='subcat' class='add_label'>Subcat:</label>
-                        <input class='add_input' type='text' name='subcat' autocomplete='off'>
+                        <label for='category' class='add_label'>Category:</label>
+                        <input class='add_input' type='text' name='category' autocomplete='off'>
                     </div>
                     <label for='file'>Select a file:</label>
                     <input type='file' id='file' name='file'>

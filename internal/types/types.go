@@ -1,69 +1,10 @@
 package types
 
 import (
-	"time"
-	"database/sql"
 	"fmt"
 )
 
-var SubCategories = map[uint8]string{
-	// здоровье
-	1: "1-лекарство", 2: "2-обследования", 3: "3-уход за собой", 4: "4-профилактика",
-	// непродукты
-	5: "5-одежда", 6: "6-обувь", 7: "7-аксессуары", 8: "8-мебель", 9: "9-электроника", 10: "10-хозтовары",
-	11: "11-для ремонта", 12: "12-книги", 13: "13-спорт", 14: "14-развлечения", 15: "15-косметика", 16: "16-другое",
-	// продукты
-	17: "17-для дома", 18: "18-фр/сфр/ор", 19: "19-неполезное", 20: "20-не дома", 35: "35-животным",
-	// проезд
-	21: "21-межгород", 22: "22-такси", 23: "23-общественный",
-	// развлеченья
-	24: "24-кафе", 25: "25-культуры", 26: "26-заказ еды", 27: "27-путешествия", 28: "28-другое",
-	// другое
-	29: "29-услуги", 30: "30-государству", 31: "31-подарки", 32: "32-сотовый", 33: "33-благотвор", 34: "34-другое",
-}
-
-var Nds = map[uint8]string{
-	0:  "0",
-	10: "10",
-	20: "20",
-}
-
 var ErrNoRecord = fmt.Errorf("no matching record found")
-
-type Subcat struct {
-	ID     int    `db:"id"`
-	Name   string `db:"name"`
-	Cat_id int    `db:"cat_id"`
-}
-
-type City struct {
-	ID   int    `db:"id"`
-	City string `db:"city"`
-}
-
-type Expense struct {
-	ID        int           `db:"id"`
-	Name      string        `db:"name"`
-	Subcat_id int           `db:"subcat_id"`
-	NDS       sql.NullInt32 `db:"nds"`
-}
-
-type Purchase struct {
-	ID            int            `db:"id"`
-	Purchase_date time.Time      `db:"purchase_date"`
-	City_id       int            `db:"city_id"`
-	Online        bool           `db:"online"`
-	Description   sql.NullString `db:"description"`
-	Mos_id        sql.NullInt32  `db:"mos_id"`
-}
-
-type PurchaseCheck struct {
-	ID          int     `db:"id"`
-	Purchase_id int     `db:"purchase_id"`
-	Expense_id  int     `db:"expense_id"`
-	Count       float32 `db:"count"`
-	Price       int     `db:"price"`
-}
 
 type TemplateResult struct {
 	URL           string
@@ -76,52 +17,48 @@ type TemplateResult struct {
 	SearchResult  []*ExpenseSearch
 }
 
+type StatAndSum struct {
+	Sum         int
+	Statistics  []*Statistics
+	PngCategory [][4]string
+}
+
 type AddExpenseShowForm struct {
-	Date        string
-	Cities      []string
-	ExpenseName []string
-	Subcat      []string
-	Online      []string
-	Nds         []string
-	Form        *Form
+	Date     string
+	Name     []string
+	Category []string
+	Cities   []string
+	Online   []string
+	Form     *Form
 }
 
 type FilterExpenses struct {
 	DateLow  string `form:"date_low"`
 	DateHigh string `form:"date_high"`
-	Subcat   string `form:"subcat"`
+	URL      string `form:"url"`
+	Category string `form:"category"`
 }
 
 type ExpenseAdd struct {
-	Date   string `form:"date"`
-	Name   string `form:"name"`
-	Subcat string `form:"subcat"`
-	City   string `form:"city"`
-	Online bool   `form:"online"`
-	Count  string `form:"count"`
-	Price  string `form:"price"`
-	NDS    string `form:"nds"`
-}
-
-type StatAndSum struct {
-	Sum        int
-	Statistics []*Statistics
-	PngSubcat  [][]string
-	PngCat     [][]string
+	Date     string  `form:"date"`
+	Name     string  `form:"name"`
+	Category string  `form:"category"`
+	City     string  `form:"city"`
+	Online   bool    `form:"online"`
+	Count    float32 `form:"count"`
+	Price    string  `form:"price"`
 }
 
 type ExpenseShow struct {
-	Date    string  `db:"date"`
-	Price   float32 `db:"price"`
-	Expense string  `db:"expense"`
-	Subcat  string  `db:"subcat"`
-	Cat     string  `db:"cat"`
+	Date     string  `db:"date"`
+	Price    float32 `db:"price"`
+	Name     string  `db:"name"`
+	Category string  `db:"category"`
 }
 
 type Statistics struct {
-	Cat       string  `db:"cat"`
-	Subcat    string  `db:"subcat"`
-	SumSubcat float32 `db:"sum_subcat"`
+	Category    string  `db:"cat"`
+	SumCategory float32 `db:"sum_category"`
 }
 
 type ExpenseSearch struct {
@@ -155,5 +92,5 @@ type Item struct {
 	Nds      int     `json:"nds"`   // 1 -> 20%, 2 -> 10%
 	Price    float32 `json:"price"` // need to divide by 100
 	Quantity float32 `json:"quantity"`
-	Subcat   uint8
+	Category string
 }

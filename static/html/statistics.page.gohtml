@@ -15,16 +15,14 @@
                             <thead>
                                 <tr>
                                     <th>Category</th>
-                                    <th>Subcategory</th>
                                     <th>Sum</th>
                                 </tr>
                             </thead>
                                 {{range .Statistics}}
                             <tbody>
                                 <tr>
-                                    <td>{{.Cat}}</td>
-                                    <td>{{.Subcat}}</td>
-                                    <td>{{.SumSubcat}}</td>
+                                    <td>{{.Category}}</td>
+                                    <td>{{.SumCategory}}</td>
                                 </tr>
                                 {{end}}
                             </tbody>
@@ -32,21 +30,9 @@
                     </div>
             </div>
             <div class='graph'>
-                {{if .PngSubcat}}
+                {{if .PngCategory}}
                     <svg class='graph'>
-                        {{range $i, $path := .PngSubcat}}
-                            <g class="sector">
-                                <path class='path' d="{{index $path 0}}" fill="{{index $path 1}}" transform="scale(2)"></path>
-                                <text x="200" y="50" class="tooltip_graph">{{index $path 3}}: {{index $path 2}}</text>
-                            </g>
-                        {{end}}
-                    </svg>
-                {{else}}
-                    <p>No graph</p>
-                {{end}}
-                {{if .PngCat}}
-                    <svg class='graph'>
-                        {{range $i, $path := .PngCat}}
+                        {{range $i, $path := .PngCategory}}
                             <g class="sector">
                                 <path class='path' d="{{index $path 0}}" fill="{{index $path 1}}" transform="scale(2)"></path>
                                 <text x="200" y="50" class="tooltip_graph">{{index $path 3}}: {{index $path 2}}</text>

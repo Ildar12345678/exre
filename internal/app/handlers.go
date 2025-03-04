@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"encoding/json"
 	"strings"
-	"strconv"
 )
 
 func (a *App) ExpensesGet(c *gin.Context) {
@@ -42,7 +41,7 @@ func (a *App) ExpensesGet(c *gin.Context) {
 		return
 	}
 	
-	if err := a.render(c.Writer, c.Request, "expenses.page.tmpl", &types.TemplateResult{
+	if err := a.render(c.Writer, c.Request, "expenses.page.gohtml", &types.TemplateResult{
 		DateLow:      dateLow.Format("2006-01-02"),
 		DateHigh:     dateHigh.Format("2006-01-02"),
 		ExpensesShow: expensesShow,
@@ -58,7 +57,7 @@ func (a *App) ExpensesPost(c *gin.Context) {
 		a.clientError(c.Writer, http.StatusBadRequest)
 		return
 	}
-	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/expense?subcat=%s&date_low=%s&date_high=%s", filter.Subcat, filter.DateLow, filter.DateHigh))
+	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/expense?subcat=%s&date_low=%s&date_high=%s", filter.Category, filter.DateLow, filter.DateHigh))
 }
 
 func (a *App) StatGet(c *gin.Context) {
@@ -95,42 +94,27 @@ func (a *App) StatGet(c *gin.Context) {
 	// let's calc total sum of expenses in specified period
 	var sumTotal int
 	for i := 0; i < len(stats); i++ {
-		sumTotal += int(stats[i].SumSubcat)
+		sumTotal += int(stats[i].SumCategory)
 	}
-	// let's calc sum of expenses in all categories in specified period
-	sumCats := make(map[string]int, len(stats))
-	for i := 0; i < len(stats); i++ {
-		sumCats[stats[i].Cat] += int(stats[i].SumSubcat)
-	}
-	pngSubcat := make([][]string, len(stats))
-	pngCat := make([][]string, len(sumCats))
+	pngCategory := make([][4]string, len(stats))
 	
-	// sumSubcatsSlice and sumCatsSlice are needed for proper calculations of sectors shape and showing this data in graph
+	// sumSubcatsSlice is needed for proper calculations of sectors shape and showing this data in graph
 	sumSubcatsSlice := make([]types.Statistics, 0, len(stats))
 	for i := 0; i < len(stats); i++ {
 		sumSubcatsSlice = append(sumSubcatsSlice, types.Statistics{
-			Cat:       stats[i].Subcat,
-			SumSubcat: stats[i].SumSubcat,
+			Category:    stats[i].Category,
+			SumCategory: stats[i].SumCategory,
 		})
 	}
-	sumCatsSlice := make([]types.Statistics, 0, len(sumCats))
-	for k, v := range sumCats {
-		sumCatsSlice = append(sumCatsSlice, types.Statistics{
-			Cat:       k,
-			SumSubcat: float32(v),
-		})
-	}
-	pngSubcat = calcSectorsInGraph(sumTotal, sumSubcatsSlice)
-	pngCat = calcSectorsInGraph(sumTotal, sumCatsSlice)
+	pngCategory = calcSectorsInGraph(sumTotal, sumSubcatsSlice)
 	
-	if err := a.render(c.Writer, c.Request, "statistics.page.tmpl", &types.TemplateResult{
+	if err := a.render(c.Writer, c.Request, "statistics.page.gohtml", &types.TemplateResult{
 		DateLow:  dateLow.Format("2006-01-02"),
 		DateHigh: dateHigh.Format("2006-01-02"),
 		Statistics: types.StatAndSum{
-			Sum:        sumTotal,
-			Statistics: stats,
-			PngSubcat:  pngSubcat,
-			PngCat:     pngCat,
+			Sum:         sumTotal,
+			Statistics:  stats,
+			PngCategory: pngCategory,
 		}}); err != nil {
 		return
 	}
@@ -146,16 +130,30 @@ func (a *App) StatPost(c *gin.Context) {
 }
 
 func (a *App) AddExpenseGet(c *gin.Context) {
-	form := types.AddExpenseShowForm{
-		Date:        time.Now().Format("2006-01-02"),
-		Cities:      a.cache.dbCache["city"],
-		ExpenseName: a.cache.dbCache["expense"],
-		Subcat:      a.cache.dbCache["subcat"],
-		Online:      []string{"true", "false"},
-		Nds:         []string{"10", "20", "0"},
-		Form:        &types.Form{},
+	cities, err := a.db.GetCities()
+	if err != nil {
+		a.serverError(c.Writer, err)
+		return
 	}
-	if err := a.render(c.Writer, c.Request, "add.page.tmpl", &types.TemplateResult{AddShow: form}); err != nil {
+	
+	names, err := a.db.GetExpensesNames()
+	if err != nil {
+		a.serverError(c.Writer, err)
+		return
+	}
+	categories, err := a.db.GetCategories()
+	if err != nil {
+		a.serverError(c.Writer, err)
+		return
+	}
+	if err := a.render(c.Writer, c.Request, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+		Date:     time.Now().Format("2006-01-02"),
+		Cities:   cities,
+		Name:     names,
+		Category: categories,
+		Online:   []string{"true", "false"},
+		Form:     &types.Form{},
+	}}); err != nil {
 		return
 	}
 }
@@ -167,33 +165,39 @@ func (a *App) AddExpensePost(c *gin.Context) {
 		return
 	}
 	form := types.NewForm(&ea)
-	form.Required("date", "name", "subcat", "city", "count", "price")
-	form.SubcatCheck()
-	form.PermittedValues("subcat", types.SubCategories)
-	form.PermittedValues("nds", types.Nds)
+	form.Required("date", "name", "category", "city", "count", "price")
 	
-	if !form.Valid() {
-		a.render(c.Writer, c.Request, "add.page.tmpl", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
-			Date:        time.Now().Format("2006-01-02"),
-			Cities:      a.cache.dbCache["city"],
-			ExpenseName: a.cache.dbCache["expense"],
-			Subcat:      a.cache.dbCache["subcat"],
-			Online:      []string{"true", "false"},
-			Nds:         []string{"10", "20", "0"},
-			Form:        form,
-		}})
-		return
-	}
-	
-	ea.Subcat = strings.Split(ea.Subcat, "-")[1]
-	
-	expenseID, err := a.db.AddExpense(&ea)
+	cities, err := a.db.GetCities()
 	if err != nil {
 		a.serverError(c.Writer, err)
 		return
 	}
-	if ok, err := a.cache.updateCache("expense", expenseID); !ok {
-		a.logger.Errorf("cache is not updated: %s", err.Error())
+	names, err := a.db.GetExpensesNames()
+	if err != nil {
+		a.serverError(c.Writer, err)
+		return
+	}
+	categories, err := a.db.GetCategories()
+	if err != nil {
+		a.serverError(c.Writer, err)
+		return
+	}
+	
+	if !form.Valid() {
+		a.render(c.Writer, c.Request, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+			Date:     time.Now().Format("2006-01-02"),
+			Cities:   cities,
+			Name:     names,
+			Category: categories,
+			Online:   []string{"true", "false"},
+			Form:     form,
+		}})
+		return
+	}
+	
+	if err = a.db.AddExpense(&ea); err != nil {
+		a.serverError(c.Writer, err)
+		return
 	}
 	
 	c.Redirect(http.StatusSeeOther, "/add")
@@ -201,7 +205,6 @@ func (a *App) AddExpensePost(c *gin.Context) {
 
 func (a *App) UploadExpensesFromJson(c *gin.Context) {
 	mpd, err := c.MultipartForm()
-	var expenseIDs []any
 	if err == nil {
 		file, err := mpd.File["file"][0].Open()
 		defer file.Close()
@@ -212,7 +215,7 @@ func (a *App) UploadExpensesFromJson(c *gin.Context) {
 			if err == nil {
 				check := ch[0].Ticket.Document.Receipt
 				check.Date = strings.Split(check.Date, "T")[0]
-				subcats := strings.Split(mpd.Value["subcat"][0], " ")
+				subcats := strings.Split(mpd.Value["subcat"][0], "|")
 				if len(check.Items) != len(subcats) {
 					a.clientError(c.Writer, http.StatusBadRequest)
 					return
@@ -224,36 +227,26 @@ func (a *App) UploadExpensesFromJson(c *gin.Context) {
 					} else {
 						check.Items[i].Nds = 10
 					}
-					subcat, err := strconv.ParseInt(subcats[i], 10, 64)
-					if err != nil {
-						a.clientError(c.Writer, http.StatusBadRequest)
-						return
-					}
-					check.Items[i].Subcat = uint8(subcat)
+					check.Items[i].Category = subcats[i]
 				}
 				check.City = mpd.Value["city"][0]
 				expensesToAdd := convertCheckToExpenseAddTypes(&check)
-				expenseIDs = make([]any, len(expensesToAdd))
 				for i := 0; i < len(expensesToAdd); i++ {
-					expenseID, err := a.db.AddExpense(expensesToAdd[i])
-					if err != nil {
+					if err = a.db.AddExpense(expensesToAdd[i]); err != nil {
 						a.serverError(c.Writer, err)
 						return
 					}
-					expenseIDs[i] = expenseID
 				}
 			}
 		}
 	}
-	if ok, err := a.cache.updateCache("expense", expenseIDs...); !ok {
-		a.logger.Errorf("cache is not updated: %s", err.Error())
-	}
+	
 	c.Redirect(http.StatusSeeOther, "/add")
 }
 
 func (a *App) SearchGet(c *gin.Context) {
 	
-	if err := a.render(c.Writer, c.Request, "search.page.tmpl", &types.TemplateResult{
+	if err := a.render(c.Writer, c.Request, "search.page.gohtml", &types.TemplateResult{
 		SearchResult: nil,
 	}); err != nil {
 		return
@@ -282,7 +275,7 @@ func (a *App) SearchPost(c *gin.Context) {
 		}
 	}
 	
-	if err := a.render(c.Writer, c.Request, "search.page.tmpl", &types.TemplateResult{
+	if err := a.render(c.Writer, c.Request, "search.page.gohtml", &types.TemplateResult{
 		SearchResult: searchResult,
 	}); err != nil {
 		return

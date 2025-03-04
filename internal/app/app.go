@@ -4,37 +4,40 @@ import (
 	"expenses2/internal/log"
 	"expenses2/internal/config"
 	"net/http"
-	"expenses2/internal/db"
 	"github.com/gin-gonic/gin"
 	"context"
+	"expenses2/internal/db"
 )
 
 type App struct {
 	logger     *log.Logger
 	conf       *config.AppConfig
 	srv        *http.Server
-	db         *dblayer.DB
+	db         DB
 	cache      *cache
 	shutdownCh chan struct{}
 }
 
-func NewApp(addr, staticDir, logfile string) (*App, error) {
-	conf := config.NewAppConfig(addr, staticDir, logfile)
-	db, err := dblayer.NewDB()
+func NewApp(appConfig *config.AppConfig) (*App, error) {
+	db, err := db.NewDB(appConfig.DBType, appConfig.DBPath)
 	if err != nil {
 		return nil, err
 	}
-	cache, err := newCache("./html", db)
+	err = db.Initialize()
 	if err != nil {
 		return nil, err
 	}
-	logger, err := log.NewLog(conf.LogFile)
+	cache, err := newCache(appConfig.StaticDir + "/html")
+	if err != nil {
+		return nil, err
+	}
+	logger, err := log.NewLog(appConfig.LogFile)
 	if err != nil {
 		return nil, err
 	}
 	return &App{
 		logger: logger,
-		conf:   conf,
+		conf:   appConfig,
 		db:     db,
 		cache:  cache,
 	}, nil
@@ -72,7 +75,7 @@ func (a *App) StartServer() error {
 }
 
 func (a *App) Shutdown(ctx context.Context) error {
-	if err := dblayer.CloseDB(a.db); err != nil {
+	if err := a.db.Close(); err != nil {
 		a.logger.Errorf("error while closing DB:", err.Error())
 	}
 	return a.srv.Shutdown(ctx)

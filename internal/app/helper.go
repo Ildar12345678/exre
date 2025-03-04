@@ -64,9 +64,9 @@ func getDate(dateStr string, numDay int) (date time.Time, err error) {
 
 // calcSectorsInGraph is used to calculate path's coordinates attributes for svg drawing
 // returned data is slice of path's. single slice is a slice of attributes
-func calcSectorsInGraph(total int, sectors []types.Statistics) [][]string {
+func calcSectorsInGraph(total int, sectors []types.Statistics) [][4]string {
 	colors := []string{"red", "blue", "brown", "green", "black", "yellow", "pink", "white", "orange"}
-	result := make([][]string, len(sectors))
+	result := make([][4]string, len(sectors))
 	type point struct {
 		x, y int
 	}
@@ -76,13 +76,13 @@ func calcSectorsInGraph(total int, sectors []types.Statistics) [][]string {
 	xStart := 150
 	yStart := 40
 	if len(sectors) == 1 {
-		return [][]string{{fmt.Sprintf("M%d,%d L%d,%d A%d,%d 0 1 1 %d,%d A%d,%d 0 1 1 %d,%d z",
+		return [][4]string{{fmt.Sprintf("M%d,%d L%d,%d A%d,%d 0 1 1 %d,%d A%d,%d 0 1 1 %d,%d z",
 			center.x, center.y, xStart, yStart, radius, radius, xStart, yStart+2*radius, radius, radius, xStart, yStart),
-			"red", fmt.Sprintf("%d", int(sectors[0].SumSubcat)), sectors[0].Cat}}
+			"red", fmt.Sprintf("%d", int(sectors[0].SumCategory)), sectors[0].Category}}
 	}
 	for i := 0; i < len(sectors); i++ {
 		rotFlag := 0
-		sectorDegree := 2 * math.Pi * float64(sectors[i].SumSubcat) / float64(total)
+		sectorDegree := 2 * math.Pi * float64(sectors[i].SumCategory) / float64(total)
 		degree += sectorDegree
 		if sectorDegree >= math.Pi {
 			rotFlag = 1
@@ -92,7 +92,7 @@ func calcSectorsInGraph(total int, sectors []types.Statistics) [][]string {
 		path := fmt.Sprintf("M%d,%d L%d,%d A%d,%d 0 %d 1 %d,%d z",
 			center.x, center.y, xStart, yStart, radius, radius, rotFlag, x, y)
 		color := colors[i%len(colors)]
-		result[i] = []string{path, color, fmt.Sprintf("%d", int(sectors[i].SumSubcat)), sectors[i].Cat}
+		result[i] = [4]string{path, color, fmt.Sprintf("%d", int(sectors[i].SumCategory)), sectors[i].Category}
 		xStart = x
 		yStart = y
 	}
@@ -105,14 +105,13 @@ func convertCheckToExpenseAddTypes(check *types.Check) (expenses []*types.Expens
 	expenses = make([]*types.ExpenseAdd, len(check.Items))
 	for i := 0; i < len(expenses); i++ {
 		expenses[i] = &types.ExpenseAdd{
-			Date:   check.Date,
-			Name:   check.Items[i].Name,
-			Subcat: types.SubCategories[check.Items[i].Subcat],
-			City:   check.City,
-			Online: false,
-			Count:  fmt.Sprintf("%d", int(check.Items[i].Quantity)),
-			Price:  fmt.Sprintf("%d", int(check.Items[i].Price)),
-			NDS:    fmt.Sprintf("%d", check.Items[i].Nds),
+			Date:     check.Date,
+			Name:     check.Items[i].Name,
+			Category: check.Items[i].Category,
+			City:     check.City,
+			Online:   false,
+			Count:    check.Items[i].Quantity,
+			Price:    fmt.Sprintf("%d", int(check.Items[i].Price)),
 		}
 	}
 	return

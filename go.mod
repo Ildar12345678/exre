@@ -2,6 +2,8 @@ module expenses2
 
 require (
 	github.com/gin-gonic/gin v1.9.1
+	github.com/mattn/go-sqlite3 v1.14.6
+	go.mongodb.org/mongo-driver v1.13.1
 	github.com/lib/pq v1.10.9
 )
 
