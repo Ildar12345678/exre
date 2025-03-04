@@ -7,28 +7,29 @@ import (
 	"time"
 	"math"
 	"expenses2/internal/types"
+	"github.com/gofiber/fiber/v2"
 )
 
 // The serverError helper writes an error message and stack trace to the errorLog,
 // then sends a generic 500 Internal Server Error response to the user.
-func (a *App) serverError(w http.ResponseWriter, err error) {
+func (a *App) serverError(c *fiber.Ctx, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	a.logger.Errorf(trace)
-	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	c.Status(http.StatusInternalServerError)
 }
 
 // The clientError helper sends a specific status code and corresponding description
 // to the user. We'll use this later in the book to send responses like 400 "Bad
 // Request" when there's a problem with the request that the user sent.
-func (a *App) clientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
+func (a *App) clientError(c *fiber.Ctx, status int) {
+	c.Status(status)
 }
 
 // For consistency, we'll also implement a notFound helper. This is simply a
 // convenience wrapper around clientError which sends a 404 Not Found response to
 // the user.
-func (a *App) notFound(w http.ResponseWriter) {
-	a.clientError(w, http.StatusNotFound)
+func (a *App) notFound(c *fiber.Ctx) {
+	a.clientError(c, http.StatusNotFound)
 }
 
 func lastDay(month time.Month) int {

@@ -7,88 +7,76 @@ import (
 	"expenses2/internal/types"
 	"fmt"
 	"bytes"
-	"github.com/gin-gonic/gin"
 	"encoding/json"
 	"strings"
+	"github.com/gofiber/fiber/v2"
 )
 
-func (a *App) ExpensesGet(c *gin.Context) {
+func (a *App) ExpensesGet(c *fiber.Ctx) error {
 	var dateLow, dateHigh time.Time
 	var err error
 	dateLow, err = getDate(c.Query("date_low"), 1)
 	if err != nil {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
 	dateHigh, err = getDate(c.Query("date_high"), lastDay(time.Now().Month()))
 	if err != nil {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
 	
 	if dateHigh.Sub(dateLow) < 0 {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
 	
 	expensesShow, err := a.db.GetExpenses(dateLow, dateHigh)
 	if err != nil {
 		if errors.Is(err, types.ErrNoRecord) {
-			a.notFound(c.Writer)
+			a.notFound(c)
 		} else {
-			a.serverError(c.Writer, err)
+			a.serverError(c, err)
 		}
-		return
+		return nil
 	}
 	
-	if err := a.render(c.Writer, c.Request, "expenses.page.gohtml", &types.TemplateResult{
+	return a.render(c, "expenses.page.gohtml", &types.TemplateResult{
 		DateLow:      dateLow.Format("2006-01-02"),
 		DateHigh:     dateHigh.Format("2006-01-02"),
 		ExpensesShow: expensesShow,
-	}); err != nil {
-		return
-	}
+	})
 }
 
-func (a *App) ExpensesPost(c *gin.Context) {
-	filter := types.FilterExpenses{}
-	if err := c.Bind(&filter); err != nil {
-		a.logger.Errorf("error while bind in ExpensesPost: %s", err.Error())
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
-	}
-	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/expense?subcat=%s&date_low=%s&date_high=%s", filter.Category, filter.DateLow, filter.DateHigh))
-}
-
-func (a *App) StatGet(c *gin.Context) {
+func (a *App) StatGet(c *fiber.Ctx) error {
 	
 	var dateLow, dateHigh time.Time
 	var err error
 	
 	dateLow, err = getDate(c.Query("date_low"), 1)
 	if err != nil {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
 	dateHigh, err = getDate(c.Query("date_high"), lastDay(time.Now().Month()))
 	if err != nil {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
 	
 	if dateHigh.Sub(dateLow) < 0 {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
 	
 	stats, err := a.db.GetStatistics(dateLow, dateHigh)
 	if err != nil {
 		if errors.Is(err, types.ErrNoRecord) {
-			a.notFound(c.Writer)
+			a.notFound(c)
 		} else {
-			a.serverError(c.Writer, err)
+			a.serverError(c, err)
 		}
-		return
+		return nil
 	}
 	
 	// let's calc total sum of expenses in specified period
@@ -108,83 +96,80 @@ func (a *App) StatGet(c *gin.Context) {
 	}
 	pngCategory = calcSectorsInGraph(sumTotal, sumSubcatsSlice)
 	
-	if err := a.render(c.Writer, c.Request, "statistics.page.gohtml", &types.TemplateResult{
+	return a.render(c, "statistics.page.gohtml", &types.TemplateResult{
 		DateLow:  dateLow.Format("2006-01-02"),
 		DateHigh: dateHigh.Format("2006-01-02"),
 		Statistics: types.StatAndSum{
 			Sum:         sumTotal,
 			Statistics:  stats,
 			PngCategory: pngCategory,
-		}}); err != nil {
-		return
-	}
+		}})
 }
 
-func (a *App) StatPost(c *gin.Context) {
-	dates := types.FilterExpenses{}
-	if err := c.Bind(&dates); err != nil {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+func (a *App) Dates(c *fiber.Ctx) error {
+	filter := types.FilterExpenses{}
+	if err := c.BodyParser(&filter); err != nil {
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
-	c.Redirect(http.StatusSeeOther, fmt.Sprintf("/stat?date_low=%s&date_high=%s", dates.DateLow, dates.DateHigh))
+	return c.Redirect(fmt.Sprintf("%s?date_low=%s&date_high=%s&subcat=%s", filter.URL, filter.DateLow, filter.DateHigh, filter.Category),
+		http.StatusSeeOther)
 }
 
-func (a *App) AddExpenseGet(c *gin.Context) {
+func (a *App) AddExpenseGet(c *fiber.Ctx) error {
 	cities, err := a.db.GetCities()
 	if err != nil {
-		a.serverError(c.Writer, err)
-		return
+		a.serverError(c, err)
+		return nil
 	}
 	
 	names, err := a.db.GetExpensesNames()
 	if err != nil {
-		a.serverError(c.Writer, err)
-		return
+		a.serverError(c, err)
+		return nil
 	}
 	categories, err := a.db.GetCategories()
 	if err != nil {
-		a.serverError(c.Writer, err)
-		return
+		a.serverError(c, err)
+		return nil
 	}
-	if err := a.render(c.Writer, c.Request, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+	return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
 		Date:     time.Now().Format("2006-01-02"),
 		Cities:   cities,
 		Name:     names,
 		Category: categories,
 		Online:   []string{"true", "false"},
 		Form:     &types.Form{},
-	}}); err != nil {
-		return
-	}
+	}})
 }
 
-func (a *App) AddExpensePost(c *gin.Context) {
+func (a *App) AddExpensePost(c *fiber.Ctx) error {
 	ea := types.ExpenseAdd{}
-	if err := c.Bind(&ea); err != nil {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+	if err := c.BodyParser(&ea); err != nil {
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
 	form := types.NewForm(&ea)
 	form.Required("date", "name", "category", "city", "count", "price")
 	
 	cities, err := a.db.GetCities()
 	if err != nil {
-		a.serverError(c.Writer, err)
-		return
+		a.serverError(c, err)
+		return nil
 	}
 	names, err := a.db.GetExpensesNames()
 	if err != nil {
-		a.serverError(c.Writer, err)
-		return
+		a.serverError(c, err)
+		return nil
 	}
 	categories, err := a.db.GetCategories()
 	if err != nil {
-		a.serverError(c.Writer, err)
-		return
+		a.serverError(c, err)
+		return nil
 	}
 	
 	if !form.Valid() {
-		a.render(c.Writer, c.Request, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+		a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
 			Date:     time.Now().Format("2006-01-02"),
 			Cities:   cities,
 			Name:     names,
@@ -192,18 +177,18 @@ func (a *App) AddExpensePost(c *gin.Context) {
 			Online:   []string{"true", "false"},
 			Form:     form,
 		}})
-		return
+		return nil
 	}
 	
 	if err = a.db.AddExpense(&ea); err != nil {
-		a.serverError(c.Writer, err)
-		return
+		a.serverError(c, err)
+		return nil
 	}
 	
-	c.Redirect(http.StatusSeeOther, "/add")
+	return c.Redirect("/expense/add", http.StatusSeeOther)
 }
 
-func (a *App) UploadExpensesFromJson(c *gin.Context) {
+func (a *App) UploadExpensesFromJson(c *fiber.Ctx) error {
 	mpd, err := c.MultipartForm()
 	if err == nil {
 		file, err := mpd.File["file"][0].Open()
@@ -217,8 +202,8 @@ func (a *App) UploadExpensesFromJson(c *gin.Context) {
 				check.Date = strings.Split(check.Date, "T")[0]
 				subcats := strings.Split(mpd.Value["subcat"][0], "|")
 				if len(check.Items) != len(subcats) {
-					a.clientError(c.Writer, http.StatusBadRequest)
-					return
+					a.clientError(c, http.StatusBadRequest)
+					return nil
 				}
 				for i := range check.Items {
 					check.Items[i].Price /= 100
@@ -233,53 +218,43 @@ func (a *App) UploadExpensesFromJson(c *gin.Context) {
 				expensesToAdd := convertCheckToExpenseAddTypes(&check)
 				for i := 0; i < len(expensesToAdd); i++ {
 					if err = a.db.AddExpense(expensesToAdd[i]); err != nil {
-						a.serverError(c.Writer, err)
-						return
+						a.serverError(c, err)
+						return nil
 					}
 				}
 			}
 		}
 	}
 	
-	c.Redirect(http.StatusSeeOther, "/add")
+	return c.Redirect("/expense/add", http.StatusSeeOther)
 }
 
-func (a *App) SearchGet(c *gin.Context) {
-	
-	if err := a.render(c.Writer, c.Request, "search.page.gohtml", &types.TemplateResult{
+func (a *App) SearchGet(c *fiber.Ctx) error {
+	return a.render(c, "search.page.gohtml", &types.TemplateResult{
 		SearchResult: nil,
-	}); err != nil {
-		return
-	}
+	})
 }
 
-func (a *App) SearchPost(c *gin.Context) {
+func (a *App) SearchPost(c *fiber.Ctx) error {
 	var search string
-	if err := c.Request.ParseForm(); err != nil {
-		a.logger.Errorf("error while bind in Search: %s", err.Error())
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
-	}
-	search = c.Request.Form["search"][0]
+	search = c.FormValue("search")
 	if search == "" {
-		a.clientError(c.Writer, http.StatusBadRequest)
-		return
+		a.clientError(c, http.StatusBadRequest)
+		return nil
 	}
 	searchResult, err := a.db.SearchExpense(search)
 	if err != nil {
 		if errors.Is(err, types.ErrNoRecord) {
-			a.notFound(c.Writer)
+			a.notFound(c)
 		} else {
-			a.serverError(c.Writer, err)
-			return
+			a.serverError(c, err)
+			return nil
 		}
 	}
 	
-	if err := a.render(c.Writer, c.Request, "search.page.gohtml", &types.TemplateResult{
+	return a.render(c, "search.page.gohtml", &types.TemplateResult{
 		SearchResult: searchResult,
-	}); err != nil {
-		return
-	}
+	})
 }
 
 // addDefaultData is used to add request.URL.Path to data which is transfer to template (for dateInput template)
@@ -292,13 +267,13 @@ func (a *App) addDefaultData(tr *types.TemplateResult, r *http.Request) *types.T
 }
 
 // render is general function to send data to responseWriter
-func (a *App) render(w http.ResponseWriter, r *http.Request, name string, tr *types.TemplateResult) error {
+func (a *App) render(c *fiber.Ctx, name string, tr *types.TemplateResult) error {
 	// Retrieve the appropriate template set from the cache based on the page name
 	// (like 'home.page.tmpl'). If no entry exists in the cache with the
 	// provided name, call the serverError helper method that we made earlier.
 	ts, ok := a.cache.templateCache[name]
 	if !ok {
-		a.serverError(w, fmt.Errorf("The template %s does not exist", name))
+		a.serverError(c, fmt.Errorf("The template %s does not exist", name))
 		return fmt.Errorf("no required template")
 	}
 	
@@ -306,12 +281,12 @@ func (a *App) render(w http.ResponseWriter, r *http.Request, name string, tr *ty
 	buf := new(bytes.Buffer)
 	
 	// firstly execute to the buffer. if error occurs no data is sent to client
-	err := ts.Execute(buf, a.addDefaultData(tr, r))
+	err := ts.Execute(buf, tr)
 	if err != nil {
-		a.serverError(w, err)
+		a.serverError(c, err)
 		return err
 	}
 	
-	_, err = buf.WriteTo(w)
-	return err
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.Status(http.StatusOK).Send(buf.Bytes())
 }

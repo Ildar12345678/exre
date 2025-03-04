@@ -3,16 +3,14 @@ package app
 import (
 	"expenses2/internal/log"
 	"expenses2/internal/config"
-	"net/http"
-	"github.com/gin-gonic/gin"
-	"context"
 	"expenses2/internal/db"
+	"github.com/gofiber/fiber/v2"
 )
 
 type App struct {
 	logger     *log.Logger
 	conf       *config.AppConfig
-	srv        *http.Server
+	srv        *fiber.App
 	db         DB
 	cache      *cache
 	shutdownCh chan struct{}
@@ -43,40 +41,36 @@ func NewApp(appConfig *config.AppConfig) (*App, error) {
 	}, nil
 }
 
-func (a *App) routes() http.Handler {
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
+func (a *App) routes() *fiber.App {
+	app := fiber.New()
 	
-	router.Use(a.logRequest(), a.recoverPanic(), a.secureHeaders())
-	router.GET("/expense", a.ExpensesGet)
-	router.POST("/expense", a.ExpensesPost)
-	router.GET("/stat", a.StatGet)
-	router.POST("/stat", a.StatPost)
-	router.GET("/add", a.AddExpenseGet)
-	router.POST("/add", a.AddExpensePost)
-	router.POST("/upload", a.UploadExpensesFromJson)
-	router.GET("/search", a.SearchGet)
-	router.POST("/search", a.SearchPost)
-	router.Static("/static/", a.conf.StaticDir)
+	// Middleware
+	app.Use(a.logRequest, a.recoverPanic, a.secureHeaders)
 	
-	return router
+	// Routes
+	app.Get("/expense", a.ExpensesGet)
+	app.Get("/expense/stat", a.StatGet)
+	app.Post("/expense/dates", a.Dates)
+	app.Get("/expense/add", a.AddExpenseGet)
+	app.Post("/expense/add", a.AddExpensePost)
+	app.Post("/expense/upload", a.UploadExpensesFromJson)
+	app.Get("/expense/search", a.SearchGet)
+	app.Post("/expense/search", a.SearchPost)
+	app.Static("/expense/static", a.conf.StaticDir)
+	
+	return app
 }
 
 func (a *App) StartServer() error {
 	a.logger.Printf("Starting server on %s\n", a.conf.Addr)
-	
-	srv := &http.Server{
-		Addr: a.conf.Addr,
-		// ErrorLog: a.logger.ErrLogger,
-		Handler: a.routes(),
-	}
-	a.srv = srv
-	return srv.ListenAndServe()
+	app := a.routes()
+	a.srv = app
+	return app.Listen(a.conf.Addr)
 }
 
-func (a *App) Shutdown(ctx context.Context) error {
+func (a *App) Shutdown() error {
 	if err := a.db.Close(); err != nil {
 		a.logger.Errorf("error while closing DB:", err.Error())
 	}
-	return a.srv.Shutdown(ctx)
+	return a.srv.Shutdown()
 }

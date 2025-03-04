@@ -7,8 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 	"log"
-	"time"
-	"context"
 	"net/http"
 	"expenses2/internal/config"
 )
@@ -35,10 +33,8 @@ func main() {
 		<-quit
 		log.Println("Shutting down server...")
 		
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
 		// We received an interrupt signal, shut down.
-		if err := newApp.Shutdown(ctx); err != nil {
+		if err := newApp.Shutdown(); err != nil {
 			// Error from closing listeners, or context timeout:
 			log.Printf("HTTP server Shutdown: %v", err)
 		}
