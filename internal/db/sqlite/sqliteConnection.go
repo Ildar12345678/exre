@@ -2,13 +2,14 @@ package sqlite
 
 import (
 	"database/sql"
-	"time"
-	"expenses2/internal/types"
-	_ "github.com/mattn/go-sqlite3"
 	"errors"
-	"strings"
+	"expenses2/internal/types"
 	"fmt"
-	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type SQLiteDB struct {
@@ -16,23 +17,30 @@ type SQLiteDB struct {
 	dbPath string
 }
 
-func NewSQLiteDB(path string) (*SQLiteDB, error) {
-	dbName := "expenses.db"
-	conn, err := sql.Open("sqlite3", fmt.Sprintf("%s/%s", path, dbName))
+func NewSQLiteDB(dbPath, dbName string) (*SQLiteDB, error) {
+	conn, err := sql.Open("sqlite3", filepath.Join(dbPath, dbName))
 	if err != nil {
 		return nil, err
 	}
-	return &SQLiteDB{conn: conn, dbPath: path}, err
+	return &SQLiteDB{conn: conn, dbPath: dbPath}, nil
 }
 
 func (d *SQLiteDB) Initialize() error {
 	// Initialize database schema
-	initSQL, err := os.ReadFile(fmt.Sprintf("%s/init.sql", d.dbPath))
-	if err != nil {
-		return err
-	}
-	
-	_, err = d.conn.Exec(string(initSQL))
+	initSQL := `create table if not exists expenses (
+    id integer primary key autoincrement ,
+    date date not null default current_date,
+    name TEXT not null ,
+    category text not null,
+    city text not null ,
+    online bool default false,
+    count float4 not null,
+    price float4 not null
+);
+
+create index if not exists idx_expenses_date on expenses(date);`
+
+	_, err := d.conn.Exec(initSQL)
 	if err != nil {
 		return err
 	}
