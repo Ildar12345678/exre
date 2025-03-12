@@ -1,23 +1,25 @@
 package app
 
 import (
-	"expenses2/internal/log"
 	"expenses2/internal/config"
 	"expenses2/internal/db"
+	"expenses2/internal/log"
+
 	"github.com/gofiber/fiber/v2"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 type App struct {
-	logger     *log.Logger
-	conf       *config.AppConfig
-	srv        *fiber.App
-	db         DB
-	cache      *cache
-	shutdownCh chan struct{}
+	logger  *log.Logger
+	conf    *config.AppConfig
+	handler *Handler
+	srv     *fiber.App
+	db      db.DB
+	cache   *cache
 }
 
 func NewApp(appConfig *config.AppConfig) (*App, error) {
-	db, err := db.NewDB(appConfig.DBType, appConfig.DBPath)
+	db, err := db.NewDB(appConfig.DBType, appConfig.DBPath, appConfig.DBName)
 	if err != nil {
 		return nil, err
 	}
@@ -25,11 +27,11 @@ func NewApp(appConfig *config.AppConfig) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	cache, err := newCache(appConfig.StaticDir + "/html")
+	cache, err := newCache(appConfig.TemplateDir)
 	if err != nil {
 		return nil, err
 	}
-	logger, err := log.NewLog("./logs", appConfig.LogFile)
+	logger, err := log.NewLog(appConfig.LogDir, appConfig.LogFile)
 	if err != nil {
 		return nil, err
 	}

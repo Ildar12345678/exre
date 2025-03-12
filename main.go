@@ -1,26 +1,30 @@
 package main
 
 import (
-	"flag"
 	"expenses2/internal/app"
+	"expenses2/internal/config"
+	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"log"
-	"net/http"
-	"expenses2/internal/config"
+)
+
+var (
+	addr        = flag.String("addr", ":5000", "listening app port")
+	staticDir   = flag.String("static", "./static/", "location of static files")
+	templateDir = flag.String("template", "./static/html/", "location of templates")
+	logDir      = flag.String("logdir", "./logs/", "logs directory")
+	logFile     = flag.String("log", "stdout", "file to log messages")
+	dbType      = flag.String("dbtype", "sqlite", "choose db type to store your data")
+	dbPath      = flag.String("dbpath", "./db/", "choose db path to initialize and store your data")
+	dbName      = flag.String("dbname", "expenses.db", "choose db name")
 )
 
 func main() {
-	addr := flag.String("addr", ":5000", "listening app port")
-	staticDir := flag.String("static", "./static", "location of static files")
-	logFile := flag.String("log", "stdout", "file to log messages")
-	db := flag.String("db", "sqlite", "choose db to store your data")
-	
 	flag.Parse()
-	
-	conf := config.NewAppConfig(*addr, *staticDir, *logFile, *db)
-	
+
+	conf := config.NewAppConfig(*addr, *staticDir, *templateDir, *logDir, *logFile, *dbType, *dbPath, *dbName)
 	newApp, err := app.NewApp(conf)
 	if err != nil {
 		panic(err)
