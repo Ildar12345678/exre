@@ -51,6 +51,8 @@ func (a *App) routes() *fiber.App {
 	
 	// Routes
 	app.Get("/expense", a.ExpensesGet)
+	app.Post("/expense", a.ExpensesUpdate)
+	app.Post("/expense/delete", a.ExpensesDelete)
 	app.Get("/expense/stat", a.StatGet)
 	app.Post("/expense/dates", a.Dates)
 	app.Get("/expense/add", a.AddExpenseGet)

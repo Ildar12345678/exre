@@ -225,6 +225,37 @@ func (db *MongoDB) AddExpense(expense *types.ExpenseAdd) error {
 	return nil
 }
 
+func (db *MongoDB) UpdateExpense(expense *types.ExpenseShow) error {
+	ctx := context.Background()
+	filter := bson.M{
+		"id":     expense.ID,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"date":     expense.Date,
+			"name":     expense.Name,
+			"category": expense.Category,
+		},
+	}
+	_, err := db.coll.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("expense update error: %v", err)
+	}
+	return nil
+}
+
+func (db *MongoDB) DeleteExpense(id int) error {
+	ctx := context.Background()
+	filter := bson.M{
+		"id": id,
+	}
+	_, err := db.coll.DeleteOne(ctx, filter)
+	if err != nil {
+		return fmt.Errorf("expense delete error: %v", err)
+	}
+	return nil
+}
+
 func (db *MongoDB) Close() error {
 	return db.client.Disconnect(context.Background())
 }

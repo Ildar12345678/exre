@@ -15,18 +15,37 @@
                     <th>Price</th>
                     <th>Name</th>
                     <th>Category</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             {{range .ExpensesShow}}
-            <tbody>
-                <tr>
-                    <td class='expense'>{{.Date}}</td>
-                    <td class='expense'>{{.Price}}</td>
-                    <td class='expense'>{{.Name}}</td>
-                    <td class='expense'>{{.Category}}</td>
-                </tr>
-                {{end}}
-            </tbody>
+                <tbody>
+                    <tr>
+						<form action="/expense" method="post" style="display: inline;">
+                        	<td class='expense'>
+                        	    <input type="date" name="date" value="{{.Date}}" required>
+                        	</td>
+                        	<td class='expense'>{{.Price}}</td>
+                        	<td class='expense'>
+                        	    <input type="text" name="name" value="{{.Name}}" required>
+                        	</td>
+                        	<td class='expense'>
+                        	    <input type="text" name="category" value="{{.Category}}" required>
+                        	</td>
+                        	<td>                            
+                        	<input type="hidden" name="id" value="{{.ID}}">
+							<button type="submit" class="update-btn"></button>	
+                        
+						
+					</form>
+                    <form action="/expense/delete" method="post" style="display: inline;">
+                        <input type="hidden" name="id" value="{{.ID}}">
+                        <button type="submit" class="delete-btn"></button>
+                    </form>
+                    </td>
+					</tr>
+                </tbody>
+            {{end}}
         </table>
       </div>
     {{else}}

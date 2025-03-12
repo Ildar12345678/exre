@@ -203,6 +203,24 @@ func (d *SQLiteDB) AddExpense(expense *types.ExpenseAdd) error {
 	return nil
 }
 
+func (d *SQLiteDB) UpdateExpense(expense *types.ExpenseShow) error {
+	stmt := `update expenses set date=?,name=?,category=? where id=?`
+	_, err := d.conn.Exec(stmt, expense.Date, expense.Name, expense.Category, expense.ID)
+	if err != nil {
+		return fmt.Errorf("expense update error: %v", err)
+	}
+	return nil
+}
+
+func (d *SQLiteDB) DeleteExpense(id int) error {
+	stmt := `delete from expenses where id = ?`
+	_, err := d.conn.Exec(stmt, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *SQLiteDB) Close() error {
 	return d.conn.Close()
 }

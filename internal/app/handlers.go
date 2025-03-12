@@ -48,6 +48,43 @@ func (a *App) ExpensesGet(c *fiber.Ctx) error {
 	})
 }
 
+func (a *App) ExpensesUpdate(c *fiber.Ctx) error {
+	ea := types.ExpenseShow{}
+	if err := c.BodyParser(&ea); err != nil {
+		a.clientError(c, http.StatusBadRequest)
+		return nil
+	}
+	if err := a.db.UpdateExpense(&ea); err != nil {
+		a.serverError(c, err)
+		return nil
+	}
+	if err := a.updateCache(); err != nil {
+		a.serverError(c, err)
+		return nil
+	}
+	a.cache.updateEtag()
+	return c.Redirect("/expense", http.StatusSeeOther)
+}
+
+func (a *App) ExpensesDelete(c *fiber.Ctx) error {
+	ea := types.ExpenseShow{}
+	if err := c.BodyParser(&ea); err != nil {
+		a.clientError(c, http.StatusBadRequest)
+		return nil
+	}
+	if err := a.db.DeleteExpense(ea.ID); err != nil {
+		a.serverError(c, err)
+		return nil
+	}
+	if err := a.updateCache(); err != nil {
+		a.serverError(c, err)
+		return nil
+	}
+	a.cache.updateEtag()
+	return c.Redirect("/expense", http.StatusSeeOther)
+}
+
+
 func (a *App) StatGet(c *fiber.Ctx) error {
 	
 	var dateLow, dateHigh time.Time
