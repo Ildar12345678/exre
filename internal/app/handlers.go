@@ -1,16 +1,24 @@
 package app
 
 import (
-	"net/http"
-	"time"
+	"bytes"
 	"errors"
 	"expenses2/internal/types"
 	"fmt"
-	"bytes"
-	"encoding/json"
+	"net/http"
 	"strings"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 )
+
+type Handler struct {
+
+}
+
+func NewHandler() {
+	
+}
 
 func (a *App) ExpensesGet(c *fiber.Ctx) error {
 	var dateLow, dateHigh time.Time

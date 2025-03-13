@@ -6,7 +6,6 @@ import (
 	"expenses2/internal/log"
 
 	"github.com/gofiber/fiber/v2"
-	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 type App struct {
