@@ -60,8 +60,8 @@ func (a *App) routes() *fiber.App {
 	app.Post("/expense/upload", a.UploadExpensesFromJson)
 	app.Get("/expense/search", a.SearchGet)
 	app.Post("/expense/search", a.SearchPost)
-	app.Static("/expense/static", a.conf.StaticDir)
-	
+	app.Static("/static", a.conf.StaticDir)
+
 	return app
 }
 
@@ -74,7 +74,7 @@ func (a *App) StartServer() error {
 
 func (a *App) Shutdown() error {
 	if err := a.db.Close(); err != nil {
-		a.logger.Errorf("error while closing DB:", err.Error())
+		a.logger.Errorf("error while closing DB: %s", err.Error())
 	}
 	return a.srv.Shutdown()
 }

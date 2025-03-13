@@ -29,27 +29,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
-	// idleConnsClosed := make(chan struct{})
+
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
 		log.Println("Shutting down server...")
-		
-		// We received an interrupt signal, shut down.
+
 		if err := newApp.Shutdown(); err != nil {
-			// Error from closing listeners, or context timeout:
 			log.Printf("HTTP server Shutdown: %v", err)
 		}
-		// close(idleConnsClosed)
 	}()
-	
-	if err := newApp.StartServer(); err != http.ErrServerClosed {
-		// Error starting or closing listener:
+
+	if err := newApp.StartServer(); err != nil {
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
-	log.Println("Server exiting")
 	
-	// <-idleConnsClosed
+	log.Println("Server exiting")
+
 }

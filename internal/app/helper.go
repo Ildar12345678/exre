@@ -1,12 +1,13 @@
 package app
 
 import (
-	"net/http"
+	"expenses2/internal/types"
 	"fmt"
+	"math"
+	"net/http"
 	"runtime/debug"
 	"time"
-	"math"
-	"expenses2/internal/types"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -111,8 +112,8 @@ func convertCheckToExpenseAddTypes(check *types.Check) (expenses []*types.Expens
 			Category: check.Items[i].Category,
 			City:     check.City,
 			Online:   false,
-			Count:    check.Items[i].Quantity,
-			Price:    fmt.Sprintf("%d", int(check.Items[i].Price)),
+			Count:    fmt.Sprintf("%.2f", check.Items[i].Quantity),
+			Price:    fmt.Sprintf("%.2f", check.Items[i].Price),
 		}
 	}
 	return
