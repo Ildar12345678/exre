@@ -3,7 +3,6 @@ module expenses2
 require (
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/mattn/go-sqlite3 v1.14.6
-	go.mongodb.org/mongo-driver v1.13.1
 )
 
 require (
