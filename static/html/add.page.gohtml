@@ -7,7 +7,7 @@
         {{with .AddShow}}
         <div class='horizontal-container'>
             <div class='form-container'>
-                <form class='form' action='/add' method='POST'>
+                <form class='form' action='/expense/add' method='POST'>
                     <div class='form-group'>
                         <label class='add_label'>Date:</label>
                         <input class='add_input' type='date' name='date' value='{{.Date}}' autocomplete='off'>
@@ -59,11 +59,11 @@
                         <input class='add_input' type='text' name='count' value='{{.Form.Values.Get "count"}}' autocomplete='off'>
                     </div>
                     <div class='form-group'>
-                        <label class='add_label'>Expense price:</label>
+                        <label for='price' class='add_label'>Expense price:</label>
                         {{with .Form.Errors.Get "price"}}
                             <label class='error'>{{.}}</label>
                         {{end}}
-                        <input class='add_input' type='text' name='price' value='{{.Form.Values.Get "price"}}' autocomplete='off'>
+                        <input id='price' class='add_input' type='text' name='price' value='{{.Form.Values.Get "price"}}' autocomplete='off'>
                     </div>
                         <button type='submit'>Add Expense</button>
                 </form>

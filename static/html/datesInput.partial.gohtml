@@ -1,11 +1,12 @@
 {{define "datesInput"}}
 
     <div class='form-container'>
-        <form action='{{.URL}}' method='POST'>
+        <form action='/expense/dates' method='POST'>
             <label>Choose period: </label>
-            <input type='date' name='date_low' value='{{.DateLow}}'></input>
+            <input type='date' name='date_low' value='{{.DateLow}}'/>
             -
-            <input type='date' name='date_high' value='{{.DateHigh}}'></input>
+            <input type='date' name='date_high' value='{{.DateHigh}}'/>
+            <input type='hidden' name='url' value='{{.URL}}'>
             <input type='submit' value='Send'>
         </form>
     </div>

@@ -42,16 +42,15 @@ create index if not exists idx_expenses_date on expenses(date);`
 
 	_, err := d.conn.Exec(initSQL)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to initialize DB: %s", err.Error())
 	}
 	return nil
 }
 
 func (d *SQLiteDB) GetExpenses(dateLow, dateHigh time.Time) ([]*types.ExpenseShow, error) {
-	stmt := `select date, round(count * price) as price, name, category
+	stmt := `select id, date, round(count * price) as price, name, category
 						from expenses where date >= ? and date <= ? order by date`
-	
-	rows, err := d.conn.Query(stmt, dateLow, dateHigh)
+	rows, err := d.conn.Query(stmt, dateLow.Format("2006-01-02"), dateHigh.Format("2006-01-02"))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +58,7 @@ func (d *SQLiteDB) GetExpenses(dateLow, dateHigh time.Time) ([]*types.ExpenseSho
 	dest := make([]*types.ExpenseShow, 0, 100)
 	for rows.Next() {
 		var expense types.ExpenseShow
-		err = rows.Scan(&expense.Date, &expense.Price, &expense.Name, &expense.Category)
+		err = rows.Scan(&expense.ID, &expense.Date, &expense.Price, &expense.Name, &expense.Category)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return nil, types.ErrNoRecord
@@ -76,8 +75,8 @@ func (d *SQLiteDB) GetExpenses(dateLow, dateHigh time.Time) ([]*types.ExpenseSho
 func (d *SQLiteDB) GetStatistics(dateLow, dateHigh time.Time) ([]*types.Statistics, error) {
 	stmt := `select category, round(sum(count * price)) sum_category
 from expenses where date >= ? and date <= ? group by category order by category desc`
-	
-	rows, err := d.conn.Query(stmt, dateLow, dateHigh)
+
+	rows, err := d.conn.Query(stmt, dateLow.Format("2006-01-02"), dateHigh.Format("2006-01-02"))
 	if err != nil {
 		return nil, err
 	}
@@ -100,24 +99,22 @@ from expenses where date >= ? and date <= ? group by category order by category 
 
 func (d *SQLiteDB) SearchExpense(name string) ([]*types.ExpenseSearch, error) {
 	stmt := `select name, price, date from expenses where name like '%'||?||'%' order by date`
-	
+
 	dest := make([]*types.ExpenseSearch, 0, 100)
-	
-	for _, s := range []string{name, strings.ToUpper(name), strings.ToLower(name)} {
-		rows, err := d.conn.Query(stmt, s)
+
+	rows, err := d.conn.Query(stmt, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var expense types.ExpenseSearch
+		err = rows.Scan(&expense.Name, &expense.Price, &expense.Date)
 		if err != nil {
 			return nil, err
 		}
-		defer rows.Close()
-		for rows.Next() {
-			var expense types.ExpenseSearch
-			err = rows.Scan(&expense.Name, &expense.Price, &expense.Date)
-			if err != nil {
-				return nil, err
-			}
-			expense.Date = strings.Split(expense.Date, "T")[0]
-			dest = append(dest, &expense)
-		}
+		expense.Date = strings.Split(expense.Date, "T")[0]
+		dest = append(dest, &expense)
 	}
 	if len(dest) == 0 {
 		return nil, types.ErrNoRecord
@@ -126,7 +123,7 @@ func (d *SQLiteDB) SearchExpense(name string) ([]*types.ExpenseSearch, error) {
 }
 
 func (d *SQLiteDB) GetCities() ([]string, error) {
-	stmt := "select city from expenses"
+	stmt := "select distinct city from expenses"
 	rows, err := d.conn.Query(stmt)
 	if err != nil {
 		return nil, err
@@ -145,7 +142,7 @@ func (d *SQLiteDB) GetCities() ([]string, error) {
 }
 
 func (d *SQLiteDB) GetCategories() ([]string, error) {
-	stmt := "select category from expenses"
+	stmt := "select distinct category from expenses"
 	rows, err := d.conn.Query(stmt)
 	if err != nil {
 		return nil, err
@@ -163,16 +160,10 @@ func (d *SQLiteDB) GetCategories() ([]string, error) {
 	return dest, nil
 }
 
-func (d *SQLiteDB) GetExpensesNames(ids ...any) ([]string, error) {
-	stmt := "select name from expenses"
-	if len(ids) > 0 {
-		placeholders := make([]string, len(ids))
-		for i := range ids {
-			placeholders[i] = "?"
-		}
-		stmt += " WHERE id IN (" + strings.Join(placeholders, ", ") + ")"
-	}
-	rows, err := d.conn.Query(stmt, ids...)
+func (d *SQLiteDB) GetExpensesNames() ([]string, error) {
+	stmt := "select distinct name from expenses"
+
+	rows, err := d.conn.Query(stmt)
 	if err != nil {
 		return nil, err
 	}

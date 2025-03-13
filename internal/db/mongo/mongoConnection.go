@@ -5,13 +5,11 @@ import (
 	"database/sql"
 	"time"
 	"expenses2/internal/types"
-	// "go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"strings"
 )
 
 type MongoDB struct {
@@ -19,14 +17,12 @@ type MongoDB struct {
 	coll   *mongo.Collection
 }
 
-func NewMongoDB(path string) (*MongoDB, error) {
-	// path = uri|dbName|cooName
-	params := strings.Split(path, "|")
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(params[0]))
+func NewMongoDB(dbPath, dbName string) (*MongoDB, error) {
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(dbPath))
 	if err != nil {
 		return nil, err
 	}
-	coll := client.Database(params[1]).Collection(params[2])
+	coll := client.Database(dbName).Collection("expenses")
 	return &MongoDB{client: client, coll: coll}, nil
 }
 
@@ -59,16 +55,18 @@ func (db *MongoDB) GetExpenses(dateLow, dateHigh time.Time) ([]*types.ExpenseSho
 	var dest []*types.ExpenseShow
 	for cursor.Next(ctx) {
 		var doc struct {
-			Date     time.Time `bson:"date"`
-			Count    float32   `bson:"count"`
-			Price    float32   `bson:"price"`
-			Name     string    `bson:"name"`
-			Category string    `bson:"category"`
+			ID       int                `bson:"_id"`
+			Date     time.Time          `bson:"date"`
+			Count    float32            `bson:"count"`
+			Price    float32            `bson:"price"`
+			Name     string             `bson:"name"`
+			Category string             `bson:"category"`
 		}
 		if err := cursor.Decode(&doc); err != nil {
 			return nil, err
 		}
 		expense := &types.ExpenseShow{
+			ID:       doc.ID,
 			Date:     doc.Date.Format("2006-01-02"), // Convert to YYYY-MM-DD
 			Price:    doc.Count * doc.Price,         // Round to int64 as in SQLite
 			Name:     doc.Name,
@@ -171,12 +169,9 @@ func (db *MongoDB) GetCategories() ([]string, error) {
 	return nil, nil
 }
 
-func (db *MongoDB) GetExpensesNames(ids ...any) ([]string, error) {
+func (db *MongoDB) GetExpensesNames() ([]string, error) {
 	ctx := context.Background()
 	filter := bson.M{}
-	if len(ids) > 0 {
-		filter["_id"] = bson.M{"$in": ids} // Assumes ids are ObjectIDs or convertible
-	}
 	opts := options.Find().SetProjection(bson.M{"name": 1, "_id": 0})
 	cursor, err := db.coll.Find(ctx, filter, opts)
 	if err != nil {
