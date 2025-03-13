@@ -126,14 +126,13 @@ func (a *App) StatGet(c *fiber.Ctx) error {
 		}
 		return nil
 	}
-	
+
 	// let's calc total sum of expenses in specified period
 	var sumTotal int
 	for i := 0; i < len(stats); i++ {
 		sumTotal += int(stats[i].SumCategory)
 	}
-	pngCategory := make([][4]string, len(stats))
-	
+
 	// sumSubcatsSlice is needed for proper calculations of sectors shape and showing this data in graph
 	sumSubcatsSlice := make([]types.Statistics, 0, len(stats))
 	for i := 0; i < len(stats); i++ {
@@ -152,7 +151,7 @@ func (a *App) StatGet(c *fiber.Ctx) error {
 		Statistics: types.StatAndSum{
 			Sum:         sumTotal,
 			Statistics:  stats,
-			PngCategory: pngCategory,
+			PngCategory: calcSectorsInGraph(sumTotal, sumSubcatsSlice),
 		}})
 }
 
@@ -206,55 +205,112 @@ func (a *App) AddExpensePost(c *fiber.Ctx) error {
 			Online:   []string{"true", "false"},
 			Form:     form,
 		}})
-		return nil
 	}
-	
-	if err = a.db.AddExpense(&ea); err != nil {
+
+	if err := a.db.AddExpense(&ea); err != nil {
 		a.serverError(c, err)
 		return nil
 	}
-	
+
+	// Update cache after adding new expense
+	if err := a.updateCache(); err != nil {
+		a.serverError(c, err)
+		return nil
+	}
+
+	a.cache.updateEtag()
 	return c.Redirect("/expense/add", http.StatusSeeOther)
 }
 
 func (a *App) UploadExpensesFromJson(c *fiber.Ctx) error {
+	ea := &types.ExpenseAddFromCheck{}
+	form := types.NewForm(ea)
+	// todo save file in session
 	mpd, err := c.MultipartForm()
-	if err == nil {
-		file, err := mpd.File["file"][0].Open()
-		defer file.Close()
-		if err == nil {
-			ch := make([]types.MainDoc, 0)
-			decoder := json.NewDecoder(file)
-			err = decoder.Decode(&ch)
-			if err == nil {
-				check := ch[0].Ticket.Document.Receipt
-				check.Date = strings.Split(check.Date, "T")[0]
-				subcats := strings.Split(mpd.Value["subcat"][0], "|")
-				if len(check.Items) != len(subcats) {
-					a.clientError(c, http.StatusBadRequest)
-					return nil
-				}
-				for i := range check.Items {
-					check.Items[i].Price /= 100
-					if check.Items[i].Nds == 1 {
-						check.Items[i].Nds = 20
-					} else {
-						check.Items[i].Nds = 10
-					}
-					check.Items[i].Category = subcats[i]
-				}
-				check.City = mpd.Value["city"][0]
-				expensesToAdd := convertCheckToExpenseAddTypes(&check)
-				for i := 0; i < len(expensesToAdd); i++ {
-					if err = a.db.AddExpense(expensesToAdd[i]); err != nil {
-						a.serverError(c, err)
-						return nil
-					}
-				}
-			}
+	if err != nil {
+		form.Errors.Add("file", "incorrect form parse")
+		return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+			Date: time.Now().Format("2006-01-02"),
+			Form: form,
+		}})
+	}
+	files := mpd.File["file"]
+	if len(files) == 0 {
+		form.Errors.Add("file", "no files uploaded")
+		return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+			Date: time.Now().Format("2006-01-02"),
+			Form: form,
+		}})
+	}
+
+	ea.File = files[0]
+	form.Multipart = ea.File
+	check, err := form.CheckFile()
+	if err != nil {
+		a.serverError(c, err)
+	}
+
+	categories := mpd.Value["category_check"]
+	if len(categories) == 0 {
+		form.Errors.Add("category_check", "empty input is not permitted")
+		return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+			Date: time.Now().Format("2006-01-02"),
+			Form: form,
+		}})
+	}
+	form.Values.Add("category_check", categories[0])
+	form.Required("category_check")
+
+	categorySlice := strings.Split(categories[0], ",")
+	if len(check.Items) != len(categorySlice) {
+		form.Errors.Add("category_check", "enter correct amount of categories")
+		return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+			Date: time.Now().Format("2006-01-02"),
+			Form: form,
+		}})
+	}
+	for i := range check.Items {
+		check.Items[i].Price /= 100
+		if check.Items[i].Nds == 1 {
+			check.Items[i].Nds = 20
+		} else {
+			check.Items[i].Nds = 10
+		}
+		check.Items[i].Category = categorySlice[i]
+	}
+	cities := mpd.Value["city_check"]
+	if len(cities) == 0 {
+		form.Errors.Add("city_check", "enter correct city name")
+		return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+			Date: time.Now().Format("2006-01-02"),
+			Form: form,
+		}})
+	}
+
+	if !form.Valid() {
+		return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+			Cities:   cities,
+			Category: categories,
+			Form:     form,
+		}})
+	}
+
+	check.City = cities[0]
+	expensesToAdd := convertCheckToExpenseAddTypes(check)
+	for i := 0; i < len(expensesToAdd); i++ {
+		if err = a.db.AddExpense(expensesToAdd[i]); err != nil {
+			a.serverError(c, err)
+			return nil
 		}
 	}
-	
+
+	// Update cache after uploading expenses
+	if err := a.updateCache(); err != nil {
+		a.serverError(c, err)
+		return nil
+	}
+
+	a.cache.updateEtag()
 	return c.Redirect("/expense/add", http.StatusSeeOther)
 }
 
@@ -265,8 +321,7 @@ func (a *App) SearchGet(c *fiber.Ctx) error {
 }
 
 func (a *App) SearchPost(c *fiber.Ctx) error {
-	var search string
-	search = c.FormValue("search")
+	search := c.FormValue("search")
 	if search == "" {
 		a.clientError(c, http.StatusBadRequest)
 		return nil

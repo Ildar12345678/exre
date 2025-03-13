@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"mime/multipart"
 )
 
 var ErrNoRecord = fmt.Errorf("no matching record found")
@@ -29,7 +30,7 @@ type AddExpenseShowForm struct {
 	Category []string
 	Cities   []string
 	Online   []string
-	Form     *Form
+	Form     *FormAddExpense
 }
 
 type FilterExpenses struct {
@@ -45,11 +46,18 @@ type ExpenseAdd struct {
 	Category string  `form:"category"`
 	City     string  `form:"city"`
 	Online   bool    `form:"online"`
-	Count    float32 `form:"count"`
+	Count    string  `form:"count"`
 	Price    string  `form:"price"`
 }
 
+type ExpenseAddFromCheck struct {
+	City     string
+	Category string
+	File     *multipart.FileHeader
+}
+
 type ExpenseShow struct {
+	ID       int     `db:"id"`
 	Date     string  `db:"date"`
 	Price    float32 `db:"price"`
 	Name     string  `db:"name"`

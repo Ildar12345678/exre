@@ -71,8 +71,11 @@
             <div class='form-container'>
                 <form class='form' action="/expense/upload" method="post" enctype="multipart/form-data">
                     <div class='form-group'>
-                        <label class='add_label'>City:</label>
-                        <input class='add_input' type='text' name='city' list="city_names" value='челябинск' autocomplete='off'>
+                        <label for='city_check' class='add_label'>City:</label>
+                        {{with .Form.Errors.Get "city_check"}}
+                            <label class='error'>{{.}}</label>
+                        {{end}}
+                        <input id='city_check' class='add_input' type='text' name='city_check' list="city_names" value='челябинск' autocomplete='off'>
                         <datalist id="city_names">
                             {{range .Cities}}
                                 <option value="{{.}}">
@@ -80,11 +83,17 @@
                         </datalist>
                     </div>
                     <div class='form-group'>
-                        <label for='category' class='add_label'>Category:</label>
-                        <input class='add_input' type='text' name='category' autocomplete='off'>
+                        <label for='category_check' class='add_label'>Category:</label>
+                        {{with .Form.Errors.Get "category_check"}}
+                            <label class='error'>{{.}}</label>
+                        {{end}}
+                        <input id='category_check' class='add_input' type='text' name='category_check' value='{{.Form.Values.Get "category_check"}}' autocomplete='off'>
                     </div>
                     <label for='file'>Select a file:</label>
-                    <input type='file' id='file' name='file'>
+                    {{with .Form.Errors.Get "file"}}
+                        <label class='error'>{{.}}</label>
+                    {{end}}
+                    <input id='file' type='file' name='file' value='{{.Form.Values.Get "file"}}'>
                     <button type="submit">Submit</button>
                 </form>
             </div>
