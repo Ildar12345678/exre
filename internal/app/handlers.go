@@ -25,12 +25,16 @@ func (a *App) ExpensesGet(c *fiber.Ctx) error {
 		a.clientError(c, http.StatusBadRequest)
 		return nil
 	}
-	
+
 	if dateHigh.Sub(dateLow) < 0 {
 		a.clientError(c, http.StatusBadRequest)
 		return nil
 	}
-	
+
+	if match := c.Get("If-None-Match"); match == a.cache.eTagStr() {
+		c.Status(http.StatusNotModified) // Tell browser to use cache
+		return nil
+	}
 	expensesShow, err := a.db.GetExpenses(dateLow, dateHigh)
 	if err != nil {
 		if errors.Is(err, types.ErrNoRecord) {
@@ -40,8 +44,11 @@ func (a *App) ExpensesGet(c *fiber.Ctx) error {
 		}
 		return nil
 	}
-	
+
+	c.Set("ETag", a.cache.eTagStr())
+
 	return a.render(c, "expenses.page.gohtml", &types.TemplateResult{
+		URL:          "/expense",
 		DateLow:      dateLow.Format("2006-01-02"),
 		DateHigh:     dateHigh.Format("2006-01-02"),
 		ExpensesShow: expensesShow,
@@ -86,10 +93,9 @@ func (a *App) ExpensesDelete(c *fiber.Ctx) error {
 
 
 func (a *App) StatGet(c *fiber.Ctx) error {
-	
 	var dateLow, dateHigh time.Time
 	var err error
-	
+
 	dateLow, err = getDate(c.Query("date_low"), 1)
 	if err != nil {
 		a.clientError(c, http.StatusBadRequest)
@@ -100,12 +106,17 @@ func (a *App) StatGet(c *fiber.Ctx) error {
 		a.clientError(c, http.StatusBadRequest)
 		return nil
 	}
-	
+
 	if dateHigh.Sub(dateLow) < 0 {
 		a.clientError(c, http.StatusBadRequest)
 		return nil
 	}
 	
+	if match := c.Get("If-None-Match"); match == a.cache.eTagStr() {
+		c.Status(http.StatusNotModified) // Tell browser to use cache
+		return nil
+	}
+
 	stats, err := a.db.GetStatistics(dateLow, dateHigh)
 	if err != nil {
 		if errors.Is(err, types.ErrNoRecord) {
@@ -131,9 +142,11 @@ func (a *App) StatGet(c *fiber.Ctx) error {
 			SumCategory: stats[i].SumCategory,
 		})
 	}
-	pngCategory = calcSectorsInGraph(sumTotal, sumSubcatsSlice)
-	
+
+	c.Set("ETag", a.cache.eTagStr())
+
 	return a.render(c, "statistics.page.gohtml", &types.TemplateResult{
+		URL:      "/expense/stat",
 		DateLow:  dateLow.Format("2006-01-02"),
 		DateHigh: dateHigh.Format("2006-01-02"),
 		Statistics: types.StatAndSum{
@@ -154,29 +167,18 @@ func (a *App) Dates(c *fiber.Ctx) error {
 }
 
 func (a *App) AddExpenseGet(c *fiber.Ctx) error {
-	cities, err := a.db.GetCities()
-	if err != nil {
-		a.serverError(c, err)
-		return nil
-	}
-	
-	names, err := a.db.GetExpensesNames()
-	if err != nil {
-		a.serverError(c, err)
-		return nil
-	}
-	categories, err := a.db.GetCategories()
-	if err != nil {
-		a.serverError(c, err)
-		return nil
-	}
+	a.cache.mutex.Lock()
+	cities := a.cache.constDataCache["cities"]
+	names := a.cache.constDataCache["names"]
+	categories := a.cache.constDataCache["categories"]
+	a.cache.mutex.Unlock()
 	return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
 		Date:     time.Now().Format("2006-01-02"),
 		Cities:   cities,
 		Name:     names,
 		Category: categories,
 		Online:   []string{"true", "false"},
-		Form:     &types.Form{},
+		Form:     &types.FormAddExpense{},
 	}})
 }
 
@@ -188,25 +190,15 @@ func (a *App) AddExpensePost(c *fiber.Ctx) error {
 	}
 	form := types.NewForm(&ea)
 	form.Required("date", "name", "category", "city", "count", "price")
-	
-	cities, err := a.db.GetCities()
-	if err != nil {
-		a.serverError(c, err)
-		return nil
-	}
-	names, err := a.db.GetExpensesNames()
-	if err != nil {
-		a.serverError(c, err)
-		return nil
-	}
-	categories, err := a.db.GetCategories()
-	if err != nil {
-		a.serverError(c, err)
-		return nil
-	}
-	
+
+	a.cache.mutex.Lock()
+	cities := a.cache.constDataCache["cities"]
+	names := a.cache.constDataCache["names"]
+	categories := a.cache.constDataCache["categories"]
+	a.cache.mutex.Unlock()
+
 	if !form.Valid() {
-		a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
+		return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
 			Date:     time.Now().Format("2006-01-02"),
 			Cities:   cities,
 			Name:     names,
@@ -288,42 +280,65 @@ func (a *App) SearchPost(c *fiber.Ctx) error {
 			return nil
 		}
 	}
-	
+
 	return a.render(c, "search.page.gohtml", &types.TemplateResult{
 		SearchResult: searchResult,
 	})
 }
 
 // addDefaultData is used to add request.URL.Path to data which is transfer to template (for dateInput template)
-func (a *App) addDefaultData(tr *types.TemplateResult, r *http.Request) *types.TemplateResult {
-	if tr == nil {
-		tr = &types.TemplateResult{}
-	}
-	tr.URL = r.URL.Path
-	return tr
-}
+// func (a *App) addDefaultData(tr *types.TemplateResult, r *http.Request) *types.TemplateResult {
+// if tr == nil {
+// tr = &types.TemplateResult{}
+// }
+// tr.URL = r.URL.Path
+// return tr
+// }
 
 // render is general function to send data to responseWriter
 func (a *App) render(c *fiber.Ctx, name string, tr *types.TemplateResult) error {
 	// Retrieve the appropriate template set from the cache based on the page name
-	// (like 'home.page.tmpl'). If no entry exists in the cache with the
+	// (like 'home.page.gohtml'). If no entry exists in the cache with the
 	// provided name, call the serverError helper method that we made earlier.
 	ts, ok := a.cache.templateCache[name]
 	if !ok {
-		a.serverError(c, fmt.Errorf("The template %s does not exist", name))
+		a.serverError(c, fmt.Errorf("the template %s does not exist", name))
 		return fmt.Errorf("no required template")
 	}
-	
+
 	// Initialize a new buffer.
 	buf := new(bytes.Buffer)
-	
+
 	// firstly execute to the buffer. if error occurs no data is sent to client
 	err := ts.Execute(buf, tr)
 	if err != nil {
 		a.serverError(c, err)
 		return err
 	}
-	
+
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	return c.Status(http.StatusOK).Send(buf.Bytes())
+}
+
+func (a *App) updateCache() error {
+	cities, err := a.db.GetCities()
+	if err != nil {
+		return err
+	}
+	names, err := a.db.GetExpensesNames()
+	if err != nil {
+		return err
+	}
+	categories, err := a.db.GetCategories()
+	if err != nil {
+		return err
+	}
+
+	a.cache.mutex.Lock()
+	a.cache.constDataCache["cities"] = cities
+	a.cache.constDataCache["names"] = names
+	a.cache.constDataCache["categories"] = categories
+	a.cache.mutex.Unlock()
+
+	return nil
 }

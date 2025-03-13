@@ -45,10 +45,10 @@ func NewApp(appConfig *config.AppConfig) (*App, error) {
 
 func (a *App) routes() *fiber.App {
 	app := fiber.New()
-	
+
 	// Middleware
-	app.Use(a.logRequest, a.recoverPanic, a.secureHeaders)
-	
+	app.Use(a.logRequest, a.recoverPanic, a.secureHeaders, a.cacheMiddleware)
+
 	// Routes
 	app.Get("/expense", a.ExpensesGet)
 	app.Post("/expense", a.ExpensesUpdate)
