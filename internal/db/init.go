@@ -2,8 +2,6 @@ package db
 
 import (
 	"expenses2/internal/db/sqlite"
-	"expenses2/internal/db/mongo"
-	"errors"
 	"time"
 	"expenses2/internal/types"
 )
@@ -22,13 +20,6 @@ type DB interface {
 	Close() error
 }
 
-func NewDB(dbType, dbPath, dbName string) (DB, error) {
-	switch dbType {
-	case "sqlite":
-		return sqlite.NewSQLiteDB(dbPath, dbName)
-	case "mongodb":
-		return mongo.NewMongoDB(dbPath, dbName)
-	default:
-		return nil, errors.New("incorrect db choice")
-	}
+func NewDB(dbPath, dbName string) (DB, error) {
+	return sqlite.NewSQLiteDB(dbPath, dbName)
 }

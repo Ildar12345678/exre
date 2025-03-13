@@ -18,7 +18,7 @@ type App struct {
 }
 
 func NewApp(appConfig *config.AppConfig) (*App, error) {
-	db, err := db.NewDB(appConfig.DBType, appConfig.DBPath, appConfig.DBName)
+	db, err := db.NewDB(appConfig.DBPath, appConfig.DBName)
 	if err != nil {
 		return nil, err
 	}

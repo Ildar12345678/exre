@@ -6,19 +6,17 @@ type AppConfig struct {
 	TemplateDir string // defalut ./static/html/
 	LogDir      string // default ./logs/
 	LogFile     string // default stdout
-	DBType      string // default sqlite
 	DBPath      string // default ./db/
 	DBName      string // default "expenses.db"
 }
 
-func NewAppConfig(addr, staticDir, templateDir, logDir, logFile, dbType, dbPath, dbName string) *AppConfig {
+func NewAppConfig(addr, staticDir, templateDir, logDir, logFile, dbPath, dbName string) *AppConfig {
 	return &AppConfig{
 		Addr:        addr,
 		StaticDir:   staticDir,
 		TemplateDir: templateDir,
 		LogDir:      logDir,
 		LogFile:     logFile,
-		DBType:      dbType,
 		DBPath:      dbPath,
 		DBName:      dbName,
 	}

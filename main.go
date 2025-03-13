@@ -16,7 +16,6 @@ var (
 	templateDir = flag.String("template", "./static/html/", "location of templates")
 	logDir      = flag.String("logdir", "./logs/", "logs directory")
 	logFile     = flag.String("log", "stdout", "file to log messages")
-	dbType      = flag.String("dbtype", "sqlite", "choose db type to store your data")
 	dbPath      = flag.String("dbpath", "./db/", "choose db path to initialize and store your data")
 	dbName      = flag.String("dbname", "expenses.db", "choose db name")
 )
@@ -24,7 +23,7 @@ var (
 func main() {
 	flag.Parse()
 
-	conf := config.NewAppConfig(*addr, *staticDir, *templateDir, *logDir, *logFile, *dbType, *dbPath, *dbName)
+	conf := config.NewAppConfig(*addr, *staticDir, *templateDir, *logDir, *logFile, *dbPath, *dbName)
 	newApp, err := app.NewApp(conf)
 	if err != nil {
 		panic(err)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"expenses2/internal/types"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -18,6 +19,12 @@ type SQLiteDB struct {
 }
 
 func NewSQLiteDB(dbPath, dbName string) (*SQLiteDB, error) {
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		if err = os.Mkdir(dbPath, 0775); err != nil {
+			return nil, fmt.Errorf("error while creating db dir: %s", err.Error())
+		}
+	}
+
 	conn, err := sql.Open("sqlite3", filepath.Join(dbPath, dbName))
 	if err != nil {
 		return nil, err
