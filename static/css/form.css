@@ -68,6 +68,33 @@ button:hover {
     background-color: #0056b3;
 }
 
+.update-btn {
+    background-color: #fff;
+    border: none;
+    background-image: url("/static/img/edit.svg");
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.delete-btn {
+    background-color: #fff;
+    border: none;
+    background-image: url("/static/img/delete.svg");
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.update-btn:hover {
+    background-color: #c8cacc;
+}
+
+.delete-btn:hover {
+    background-color: #c8cacc;
+}
+ */
+
 /* Responsive Design */
 @media (max-width: 600px) {
     .form-container {
