@@ -72,6 +72,7 @@ func (a *App) StartServer() error {
 }
 
 func (a *App) Shutdown() error {
+	a.logger.Close()
 	if err := a.db.Close(); err != nil {
 		a.logger.Errorf("error while closing DB: %s", err.Error())
 	}

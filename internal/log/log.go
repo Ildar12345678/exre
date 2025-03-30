@@ -54,7 +54,6 @@ func (l *Logger) Errorf(msg string, v ...any) {
 	l.errLogger.Printf(msg, v...)
 }
 
-// todo make proper close for concurrent usage
 func (l *Logger) Close() {
 	l.infoFile.Close()
 	l.errFile.Close()
