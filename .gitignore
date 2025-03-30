@@ -1,5 +1,7 @@
 .vscode/
 
-./logs/
+logs/
+
+expenses
 
 db/expenses.db
