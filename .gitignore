@@ -5,3 +5,5 @@ logs/
 expenses
 
 db/expenses.db
+
+dbMigration.go
