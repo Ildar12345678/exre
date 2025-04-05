@@ -8,9 +8,10 @@ type AppConfig struct {
 	LogFile     string // default stdout
 	DBPath      string // default ./db/
 	DBName      string // default "expenses.db"
+	DefaultCity string // default ""
 }
 
-func NewAppConfig(addr, staticDir, templateDir, logDir, logFile, dbPath, dbName string) *AppConfig {
+func NewAppConfig(addr, staticDir, templateDir, logDir, logFile, dbPath, dbName, defaultCity string) *AppConfig {
 	return &AppConfig{
 		Addr:        addr,
 		StaticDir:   staticDir,
@@ -19,5 +20,6 @@ func NewAppConfig(addr, staticDir, templateDir, logDir, logFile, dbPath, dbName 
 		LogFile:     logFile,
 		DBPath:      dbPath,
 		DBName:      dbName,
+		DefaultCity: defaultCity,
 	}
 }

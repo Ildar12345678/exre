@@ -1,13 +1,14 @@
 package main
 
 import (
-	"expenses2/internal/app"
-	"expenses2/internal/config"
 	"flag"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"expenses2/internal/app"
+	"expenses2/internal/config"
 )
 
 var (
@@ -18,12 +19,13 @@ var (
 	logFile     = flag.String("log", "stdout", "file to log messages")
 	dbPath      = flag.String("dbpath", "./db/", "choose db path to initialize and store your data")
 	dbName      = flag.String("dbname", "expenses.db", "choose db name")
+	defCity     = flag.String("defcity", "", "choose default city")
 )
 
 func main() {
 	flag.Parse()
 
-	conf := config.NewAppConfig(*addr, *staticDir, *templateDir, *logDir, *logFile, *dbPath, *dbName)
+	conf := config.NewAppConfig(*addr, *staticDir, *templateDir, *logDir, *logFile, *dbPath, *dbName,*defCity)
 	newApp, err := app.NewApp(conf)
 	if err != nil {
 		panic(err)
@@ -43,7 +45,6 @@ func main() {
 	if err := newApp.StartServer(); err != nil {
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
-	
-	log.Println("Server exiting")
 
+	log.Println("Server exiting")
 }

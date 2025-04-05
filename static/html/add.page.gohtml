@@ -38,7 +38,7 @@
                     </div>
                     <div class='form-group'>
                         <label class='add_label'>City:</label>
-                        <input class='add_input' type='text' name='city' list="city_names" value='челябинск' autocomplete='off'>
+                        <input class='add_input' type='text' name='city' list="city_names" value='{{.DefaultCity}}' autocomplete='off'>
                         <datalist id="city_names">
                             {{range .Cities}}
                                 <option value="{{.}}">
@@ -75,7 +75,7 @@
                         {{with .Form.Errors.Get "city_check"}}
                             <label class='error'>{{.}}</label>
                         {{end}}
-                        <input id='city_check' class='add_input' type='text' name='city_check' list="city_names" value='челябинск' autocomplete='off'>
+                        <input id='city_check' class='add_input' type='text' name='city_check' list="city_names" value='{{.DefaultCity}}' autocomplete='off'>
                         <datalist id="city_names">
                             {{range .Cities}}
                                 <option value="{{.}}">

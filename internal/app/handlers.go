@@ -182,6 +182,7 @@ func (a *App) AddExpenseGet(c *fiber.Ctx) error {
 	return a.render(c, "add.page.gohtml", &types.TemplateResult{AddShow: types.AddExpenseShowForm{
 		Date:     time.Now().Format("2006-01-02"),
 		Cities:   cities,
+		DefaultCity: a.conf.DefaultCity,
 		Name:     names,
 		Category: categories,
 		Online:   []string{"true", "false"},

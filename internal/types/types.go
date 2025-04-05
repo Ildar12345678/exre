@@ -25,12 +25,13 @@ type StatAndSum struct {
 }
 
 type AddExpenseShowForm struct {
-	Date     string
-	Name     []string
-	Category []string
-	Cities   []string
-	Online   []string
-	Form     *FormAddExpense
+	Date        string
+	Name        []string
+	Category    []string
+	DefaultCity string
+	Cities      []string
+	Online      []string
+	Form        *FormAddExpense
 }
 
 type FilterExpenses struct {
@@ -41,13 +42,13 @@ type FilterExpenses struct {
 }
 
 type ExpenseAdd struct {
-	Date     string  `form:"date"`
-	Name     string  `form:"name"`
-	Category string  `form:"category"`
-	City     string  `form:"city"`
-	Online   bool    `form:"online"`
-	Count    string  `form:"count"`
-	Price    string  `form:"price"`
+	Date     string `form:"date"`
+	Name     string `form:"name"`
+	Category string `form:"category"`
+	City     string `form:"city"`
+	Online   bool   `form:"online"`
+	Count    string `form:"count"`
+	Price    string `form:"price"`
 }
 
 type ExpenseAddFromCheck struct {
